@@ -18,3 +18,4 @@ create index if not exists documents_investment_idx on public.documents(investme
 create index if not exists ledger_investment_idx on public.ledger_entries(investment_id);
 create index if not exists purchases_investment_idx on public.purchases(investment_id);
 create index if not exists investments_client_idx on public.investments(client_id);
+

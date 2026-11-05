@@ -1,0 +1,1 @@
+export async function GET(){return Response.json({configured:Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL&&process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY),driveConfigured:Boolean(process.env.GOOGLE_SERVICE_ACCOUNT_JSON||(process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL&&process.env.GOOGLE_PRIVATE_KEY))},{headers:{'Cache-Control':'no-store'}})}
