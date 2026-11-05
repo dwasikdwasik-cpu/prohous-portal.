@@ -27,3 +27,32 @@ create trigger ledger_audit after insert or update or delete on ledger_entries f
 create trigger docs_audit after insert or update or delete on documents for each row execute function public.log_changes();
 create trigger profiles_audit after update on profiles for each row execute function public.log_changes();
 create trigger investments_audit after insert or update or delete on investments for each row execute function public.log_changes();
+-- Existing databases: run once after the original schema.sql.
+-- Safe to run again. No existing rows are deleted.
+create table if not exists public.document_downloads (
+ id bigint generated always as identity primary key,
+ user_id uuid not null references public.profiles(id),
+ document_id uuid not null references public.documents(id),
+ created_at timestamptz not null default now()
+);
+alter table public.document_downloads enable row level security;
+drop policy if exists downloads_insert on public.document_downloads;
+create policy downloads_insert on public.document_downloads for insert to authenticated
+ with check(user_id=auth.uid() and exists(select 1 from public.documents d where d.id=document_id));
+drop policy if exists downloads_admin_read on public.document_downloads;
+create policy downloads_admin_read on public.document_downloads for select to authenticated using(public.is_admin());
+grant select,insert on public.document_downloads to authenticated;
+grant usage,select on sequence public.document_downloads_id_seq to authenticated;
+create index if not exists documents_investment_idx on public.documents(investment_id);
+create index if not exists ledger_investment_idx on public.ledger_entries(investment_id);
+create index if not exists purchases_investment_idx on public.purchases(investment_id);
+create index if not exists investments_client_idx on public.investments(client_id);
+-- Trigger functions cannot be invoked through the client API.
+revoke execute on function public.new_profile() from public,anon,authenticated;
+revoke execute on function public.log_changes() from public,anon,authenticated;
+-- These two helpers are required by authenticated RLS policies.
+revoke execute on function public.is_admin() from public,anon;
+revoke execute on function public.can_access_investment(uuid) from public,anon;
+grant execute on function public.is_admin() to authenticated;
+grant execute on function public.can_access_investment(uuid) to authenticated;
+create policy audit_admin_read on public.audit_log for select to authenticated using(public.is_admin());
