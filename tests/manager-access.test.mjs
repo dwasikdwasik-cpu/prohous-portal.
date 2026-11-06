@@ -1,7 +1,7 @@
 import test from 'node:test';import assert from 'node:assert/strict';import fs from 'node:fs';import {PGlite} from '@electric-sql/pglite';
 test('manager administers documents and clients but cannot read balances or acquire administrator privileges',async()=>{
  const db=new PGlite();try{
- await db.exec(`create schema auth;create table auth.users(id uuid primary key,email text,raw_user_meta_data jsonb);create function auth.uid() returns uuid language sql stable as $$select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid$$;create role authenticated;create role anon;grant usage on schema public,auth to authenticated;create schema storage;create table storage.buckets(id text primary key,name text,public boolean,file_size_limit bigint,allowed_mime_types text[]);create table storage.objects(bucket_id text,name text,owner_id text,metadata jsonb);alter table storage.objects enable row level security;grant usage on schema storage to authenticated;grant select,insert,update,delete on storage.objects to authenticated;`);
+ await db.exec(`create schema auth;create table auth.users(id uuid primary key,email text,raw_user_meta_data jsonb);create function auth.uid() returns uuid language sql stable as $$select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid$$;create role authenticated;create role anon;create role service_role bypassrls;grant usage on schema public,auth to service_role;grant usage on schema public,auth to authenticated;create schema storage;create table storage.buckets(id text primary key,name text,public boolean,file_size_limit bigint,allowed_mime_types text[]);create table storage.objects(bucket_id text,name text,owner_id text,metadata jsonb);alter table storage.objects enable row level security;grant usage on schema storage to authenticated;grant select,insert,update,delete on storage.objects to authenticated;`);
  await db.exec(fs.readFileSync('supabase/schema.sql','utf8').replace('create extension if not exists pgcrypto;',''));await db.exec(fs.readFileSync('supabase/upgrade-v2.sql','utf8'));
  for(const path of fs.readdirSync('supabase/migrations').filter(p=>p.startsWith('2026')&&p.endsWith('.sql')).sort())await db.exec(fs.readFileSync('supabase/migrations/'+path,'utf8'));
  const [admin,manager,client,other]=[1,2,3,4].map(n=>'00000000-0000-0000-0000-00000000000'+n);
@@ -9,7 +9,7 @@ test('manager administers documents and clients but cannot read balances or acqu
  await db.query(`update profiles set role=case when id=$1 then 'admin' when id=$2 then 'manager' else 'client' end,status='approved'`,[admin,manager]);
  const a=(await db.query(`insert into investments(name,client_id) values('A',$1) returning id`,[client])).rows[0].id,b=(await db.query(`insert into investments(name,client_id) values('B',$1) returning id`,[other])).rows[0].id;
  await db.query(`insert into ledger_entries(investment_id,type,amount) values($1,'deposit',1000),($2,'deposit',500)`,[a,b]);
- await db.exec('grant select,insert,update,delete on all tables in schema public to authenticated;grant usage,select on all sequences in schema public to authenticated;');
+ await db.exec('grant select,insert,update,delete on all tables in schema public to service_role;grant select,insert,update,delete on all tables in schema public to authenticated;grant usage,select on all sequences in schema public to authenticated;');
  async function asUser(id,fn){await db.exec('set role authenticated');await db.query(`select set_config('request.jwt.claim.sub',$1,false)`,[id]);try{return await fn()}finally{await db.exec('reset role');await db.query(`select set_config('request.jwt.claim.sub','',false)`)}}
  let invoice;
  await asUser(manager,async()=>{
@@ -41,5 +41,6 @@ test('manager administers documents and clients but cannot read balances or acqu
  await asUser(client,async()=>assert.equal((await db.query('select * from ledger_entries where investment_id=$1',[a])).rows.length,4));
  await db.query('update investments set client_id=$1 where id=$2',[manager,a]);
  await asUser(manager,async()=>assert.equal((await db.query('select * from ledger_entries')).rows.length,0));
+ await db.exec('set role service_role');await db.query('update profiles set full_name=$1 where id=$2',['System update',manager]);await db.exec('reset role');
  }finally{await db.close()}
 });
