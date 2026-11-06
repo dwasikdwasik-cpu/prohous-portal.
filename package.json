@@ -1,6 +1,6 @@
 {
   "name": "prohous-portal",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "private": true,
   "scripts": {
     "dev": "node scripts/dev.mjs",
@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.49.0",
+    "@vercel/oidc": "4.0.6",
     "next": "^15.5.29",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"

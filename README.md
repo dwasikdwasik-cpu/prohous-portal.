@@ -2,6 +2,20 @@
 
 Portal klienta i panel administratora w Next.js + Supabase Auth/PostgreSQL. Loginem jest adres e-mail, hasło ustala klient. Nowe konta oczekują na zatwierdzenie. Każda inwestycja ma przypisanego klienta i prywatny folder Google Drive.
 
+## Google Drive bez klucza JSON (Vercel OIDC)
+
+Jeśli organizacja Google blokuje tworzenie kluczy kont usług, użyj federacji tożsamości. Nie wyłączaj polityki organizacji. Portal wymienia podpisany token Vercel na krótkotrwały token konta usługi z zakresem `drive.readonly`.
+
+1. W Google Cloud Shell uruchom `bash scripts/setup-google-federation.sh`, aby zobaczyć plan. Po jego sprawdzeniu wykonaj `bash scripts/setup-google-federation.sh --apply` z kopii tego repozytorium.
+2. Skrypt jest przygotowany dla projektu `project-dcc520bb-b866-4147-a65`, konta `prohous-portal@project-dcc520bb-b866-4147-a65.iam.gserviceaccount.com` i wyłącznie produkcyjnego projektu Vercel `prohous-portal` w zespole `prohous`. Włącza wymagane API, tworzy dedykowaną pulę/providera OIDC i przyznaje dokładnemu podmiotowi Vercel rolę Workload Identity User na tym koncie usługi. Nie tworzy kluczy ani nie nadaje kontu usługi ról administratora projektu. Jeśli istniejący provider ma inną konfigurację, zatrzymuje się.
+3. W projekcie Vercel włącz OIDC w trybie Team. Dodaj zmienne produkcyjne `GOOGLE_SERVICE_ACCOUNT_EMAIL` oraz `GCP_WORKLOAD_IDENTITY_AUDIENCE` (wartość wypisana na końcu skryptu). To identyfikatory konfiguracji, nie klucze prywatne. Numer projektu w audience musi być numerem odczytanym przez skrypt, nie ID tekstowym.
+4. Udostępnij kontu usługi wyłącznie foldery inwestycji jako **Przeglądający**. Wpisz ID właściwego folderu w danej inwestycji.
+5. Ponów wdrożenie i sprawdź synchronizację oraz pobranie pliku z prawdziwego folderu. Pole `/api/health` potwierdza wyłącznie obecność konfiguracji; nie potwierdza połączenia z Google.
+
+Gdy `GCP_WORKLOAD_IDENTITY_AUDIENCE` jest ustawione, portal używa federacji i nie przełącza się automatycznie na klucz prywatny przy błędzie. Przeglądy wdrożeń (preview) nie otrzymują uprawnień do produkcyjnego Drive. Błąd ograniczeń organizacji lub uprawnień w Cloud Shell należy zgłosić administratorowi, zamiast poszerzać zakres skryptu.
+
+Instrukcje poniżej dotyczą także wariantu ze starszym kluczem JSON, jeśli taki klucz jest już dozwolony i skonfigurowany.
+
 ## Funkcje
 - Rejestracja, logowanie, potwierdzenie e-mail przez Supabase, odzyskiwanie i zmiana hasła.
 - Pulpit klienta, galeria zdjęć, wyszukiwarka dokumentów i faktur, lista zakupów z powiązaniem do faktury.

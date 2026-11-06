@@ -1,7 +1,13 @@
 import {createSign} from 'node:crypto';
+import {getVercelOidcToken} from '@vercel/oidc';
+import {federatedDriveToken} from './google-federation.mjs';
 let cached:{token:string,expires:number}|undefined;
 export async function driveToken(){
  if(cached&&cached.expires>Date.now()+60000)return cached.token;
+ if(process.env.GCP_WORKLOAD_IDENTITY_AUDIENCE){
+  cached=await federatedDriveToken({oidcToken:await getVercelOidcToken(),audience:process.env.GCP_WORKLOAD_IDENTITY_AUDIENCE,serviceAccountEmail:process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL});
+  return cached.token;
+ }
  const key=process.env.GOOGLE_SERVICE_ACCOUNT_JSON?JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT_JSON):{client_email:process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,private_key:process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g,'\n')};if(!key.client_email||!key.private_key)throw new Error('503');
  const now=Math.floor(Date.now()/1000),b64=(v:unknown)=>Buffer.from(JSON.stringify(v)).toString('base64url');
  const unsigned=b64({alg:'RS256',typ:'JWT'})+'.'+b64({iss:key.client_email,scope:'https://www.googleapis.com/auth/drive.readonly',aud:'https://oauth2.googleapis.com/token',iat:now,exp:now+3600});
