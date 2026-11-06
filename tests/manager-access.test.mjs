@@ -8,6 +8,8 @@ test('manager administers documents and clients but cannot read balances or acqu
  for(const id of [admin,manager,client,other])await db.query(`insert into auth.users values($1,$2,'{}')`,[id,id+'@test.invalid']);
  await db.query(`update profiles set role=case when id=$1 then 'admin' when id=$2 then 'manager' else 'client' end,status='approved'`,[admin,manager]);
  const a=(await db.query(`insert into investments(name,client_id) values('A',$1) returning id`,[client])).rows[0].id,b=(await db.query(`insert into investments(name,client_id) values('B',$1) returning id`,[other])).rows[0].id;
+ assert.deepEqual((await db.query('select client_invoices_visible,client_balance_visible from investments where id=$1',[a])).rows[0],{client_invoices_visible:false,client_balance_visible:false});
+ await db.query('update investments set client_invoices_visible=true,client_balance_visible=true');
  await db.query(`insert into ledger_entries(investment_id,type,amount) values($1,'deposit',1000),($2,'deposit',500)`,[a,b]);
  await db.exec('grant select,insert,update,delete on all tables in schema public to service_role;grant select,insert,update,delete on all tables in schema public to authenticated;grant usage,select on all sequences in schema public to authenticated;');
  async function asUser(id,fn){await db.exec('set role authenticated');await db.query(`select set_config('request.jwt.claim.sub',$1,false)`,[id]);try{return await fn()}finally{await db.exec('reset role');await db.query(`select set_config('request.jwt.claim.sub','',false)`)}}
@@ -39,6 +41,31 @@ test('manager administers documents and clients but cannot read balances or acqu
   assert.equal((await db.query(`select * from ledger_entries where event_document_id=$1`,[invoice])).rows.length,2);
  });
  await asUser(client,async()=>assert.equal((await db.query('select * from ledger_entries where investment_id=$1',[a])).rows.length,4));
+ // Financial visibility is enforced in RLS, including direct private file access.
+ let financialDoc,financialPath;
+ await asUser(admin,async()=>{
+  financialPath=a+'/'+crypto.randomUUID()+'.pdf';
+  await db.query(`insert into storage.objects values('portal-documents',$1,$2,'{"mimetype":"application/pdf"}')`,[financialPath,admin]);
+  financialDoc=(await db.query(`insert into documents(investment_id,title,category,storage_path,published) values($1,'Financial file','faktury',$2,true) returning id`,[a,financialPath])).rows[0].id;
+  await db.query(`insert into documents(investment_id,title,category,drive_file_id,published) values($1,'Unclassified invoice','inne','legacy-file',true)`,[a]);
+  await db.query('update investments set client_invoices_visible=false,client_balance_visible=false where id=$1',[a]);
+  assert.ok((await db.query('select * from ledger_entries where investment_id=$1',[a])).rows.length>0);
+  assert.equal((await db.query('select * from documents where id=$1',[financialDoc])).rows.length,1);
+ });
+ await asUser(client,async()=>{
+  assert.equal((await db.query('select * from ledger_entries')).rows.length,0);
+  assert.equal((await db.query('select * from documents where id=$1',[financialDoc])).rows.length,0);
+  assert.equal((await db.query("select * from documents where category='inne'")).rows.length,0);
+  assert.equal((await db.query('select * from storage.objects where name=$1',[financialPath])).rows.length,0);
+  assert.ok((await db.query("select * from documents where category='projekty'")).rows.length>0);
+  assert.equal((await db.query('update investments set client_balance_visible=true returning id')).rows.length,0);
+ });
+ await asUser(admin,()=>db.query('update investments set client_invoices_visible=true where id=$1',[a]));
+ await asUser(client,async()=>{assert.equal((await db.query('select * from documents where id=$1',[financialDoc])).rows.length,1);assert.equal((await db.query('select * from ledger_entries')).rows.length,0)});
+ await asUser(admin,()=>db.query('update investments set client_invoices_visible=false,client_balance_visible=true where id=$1',[a]));
+ await asUser(client,async()=>{assert.equal((await db.query('select * from documents where id=$1',[financialDoc])).rows.length,0);assert.equal((await db.query('select * from ledger_entries')).rows.length,4)});
+ await asUser(manager,async()=>{assert.equal((await db.query('select * from documents where id=$1',[financialDoc])).rows.length,1);assert.equal((await db.query('select * from ledger_entries')).rows.length,0)});
+ await asUser(admin,()=>db.query('update investments set client_invoices_visible=true where id=$1',[a]));
  // Investment trash must hide all related customer and installer data without changing finances.
  await asUser(manager,async()=>{
   await db.query('update investments set deleted_at=now() where id=$1',[a]);
@@ -59,7 +86,7 @@ test('manager administers documents and clients but cannot read balances or acqu
  await asUser(client,async()=>{
   assert.equal((await db.query('select * from investments where id=$1',[a])).rows.length,1);
   assert.equal((await db.query('select * from ledger_entries where investment_id=$1',[a])).rows.length,4);
-  assert.equal((await db.query('select * from storage.objects')).rows.length,1);
+  assert.equal((await db.query('select * from storage.objects')).rows.length,2);
  });
  await db.query('update investments set client_id=$1 where id=$2',[manager,a]);
  await asUser(manager,async()=>assert.equal((await db.query('select * from ledger_entries')).rows.length,0));
