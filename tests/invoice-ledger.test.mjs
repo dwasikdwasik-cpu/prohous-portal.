@@ -3,7 +3,7 @@ test('invoices debit only their investment once and preserve audit history',asyn
  const db=new PGlite();try{
  await db.exec(`create schema auth;create table auth.users(id uuid primary key,email text,raw_user_meta_data jsonb);create function auth.uid() returns uuid language sql stable as $$select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid$$;create role authenticated;create role anon;grant usage on schema public,auth to authenticated;create schema storage;create table storage.buckets(id text primary key,name text,public boolean,file_size_limit bigint,allowed_mime_types text[]);create table storage.objects(bucket_id text,name text);alter table storage.objects enable row level security;grant usage on schema storage to authenticated;grant select,insert,update,delete on storage.objects to authenticated;`);
  await db.exec(fs.readFileSync('supabase/schema.sql','utf8').replace('create extension if not exists pgcrypto;',''));await db.exec(fs.readFileSync('supabase/upgrade-v2.sql','utf8'));
- for(const path of ['20261106070406_portal_private_uploads.sql','20261106071638_document_trash.sql','20261106073023_automatic_invoice_ledger.sql'])await db.exec(fs.readFileSync('supabase/migrations/'+path,'utf8'));
+ for(const path of ['20261106070406_portal_private_uploads.sql','20261106071638_document_trash.sql','20261106073023_automatic_invoice_ledger.sql','20261106080958_investment_project_files.sql'])await db.exec(fs.readFileSync('supabase/migrations/'+path,'utf8'));
  const ids=[1,2,3].map(n=>'00000000-0000-0000-0000-00000000000'+n);for(const id of ids)await db.query(`insert into auth.users values($1,$2,'{}')`,[id,id+'@test.invalid']);
  await db.query(`update profiles set status='approved',role=case when id=$1 then 'admin' else 'client' end`,[ids[0]]);
  const a=(await db.query(`insert into investments(name,client_id) values('A',$1) returning id`,[ids[1]])).rows[0].id,b=(await db.query(`insert into investments(name,client_id) values('B',$1) returning id`,[ids[2]])).rows[0].id;
@@ -13,6 +13,9 @@ test('invoices debit only their investment once and preserve audit history',asyn
  let original;
  await asUser(ids[0],async()=>{
   await db.query(`insert into ledger_entries(investment_id,type,amount,created_by) values($1,'deposit',1000,$2)`,[a,ids[0]]);
+  const project=(await db.query(`insert into documents(investment_id,title,category,drive_file_id,published,auto_book,gross_amount) values($1,'Rzut projektu.pdf','projekty','project-fixture',true,true,999) returning id`,[a])).rows[0].id;
+  assert.equal((await db.query('select accounting_status from documents where id=$1',[project])).rows[0].accounting_status,'not_applicable');
+  assert.equal((await db.query('select id from ledger_entries where document_id=$1',[project])).rows.length,0);
   original=await add('FV/1','a'.repeat(64));
   assert.equal((await db.query(`select accounting_status from documents where id=$1`,[original])).rows[0].accounting_status,'booked');
   await db.query(`update documents set auto_book=true where id=$1`,[original]);
@@ -30,10 +33,12 @@ test('invoices debit only their investment once and preserve audit history',asyn
   assert.equal((await db.query(`select * from ledger_entries where document_id=$1`,[original])).rows.length,1);
  });
  await asUser(ids[1],async()=>{
+  assert.equal((await db.query(`select id from documents where category='projekty' and investment_id=$1`,[a])).rows.length,1);
   assert.equal((await db.query(`select * from ledger_entries where investment_id=$1`,[b])).rows.length,0);
   await assert.rejects(()=>add('ILLEGAL','e'.repeat(64)));
   await assert.rejects(()=>db.query('select public.book_document_expense()'));
  });
+ await asUser(ids[2],async()=>assert.equal((await db.query(`select id from documents where category='projekty' and investment_id=$1`,[a])).rows.length,0));
  assert.equal((await db.query(`select * from audit_log where table_name='ledger_entries'`)).rows.length,3);
  }finally{await db.close()}
 });

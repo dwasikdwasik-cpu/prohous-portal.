@@ -78,3 +78,7 @@ Spis faktur i lista dokumentów mają osobne przyciski „Podgląd” i „Pobie
 Administrator widzi w zakładkach Faktury i Wszystkie dokumenty także szkice, z oznaczeniem widoczności i przyciskiem publikacji. Klient nadal otrzymuje wyłącznie opublikowane pliki swojej inwestycji. Przy przesyłaniu można zaznaczyć „Od razu udostępnij przesłane pliki klientowi tej inwestycji”; opcja jest domyślnie włączona. Widok odświeża dane po powrocie do karty i co 30 sekund. Import rozpoznaje nazwy eksportów `_KSEF_` jako faktury.
 
 Nowe dokumenty są domyślnie publikowane, również przy imporcie Drive. „Cofnij udostępnienie” w zakładce Faktury lub w Zarządzaniu wycofuje widoczność dla klienta. Ponowny import pomija istniejące rekordy i nie cofa tej decyzji. Usunięcie do kosza i przywrócenie zachowują zasadę przywracania jako szkic. Migracja `20261106080421_automatic_document_publication.sql` zmienia wyłącznie wartość domyślną dla nowych rekordów.
+
+## Projekty inwestycyjne
+
+Zakładka „Projekty inwestycyjne” zastępuje „Zakupione towary”. Administrator może przesłać do 50 plików projektu dla wybranej inwestycji bezpośrednio z tej zakładki albo z Zarządzania. Klient widzi opublikowane pliki, może je przeglądać (PDF/zdjęcia) i pobierać. Publikację można cofnąć, a plik przenieść do kosza. Projekty nie są księgowane i nie zmieniają salda. Dane dawnych zakupów pozostają w bazie jako historia, bez widoku ani formularza zakupów w portalu.

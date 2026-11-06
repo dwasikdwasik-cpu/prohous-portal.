@@ -28,3 +28,5 @@ test('oversized storage downloads are rejected before signing',async()=>{
 });
 
 test("trashed portal uploads do not release a download URL",async()=>{const r=await serveUploadedDocument({...doc,deleted_at:new Date().toISOString()},{info(){assert.fail("must not read trashed object")}});assert.equal(r.status,404)});
+
+test("project files can be uploaded without an invoice category",async()=>{const result=await inspectUpload(new File(["%PDF-1.7 plan"],"rzut.pdf"),"projekty");assert.equal(result.mime,"application/pdf")});
