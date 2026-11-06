@@ -82,3 +82,9 @@ Nowe dokumenty są domyślnie publikowane, również przy imporcie Drive. „Cof
 ## Projekty inwestycyjne
 
 Zakładka „Projekty inwestycyjne” zastępuje „Zakupione towary”. Administrator może przesłać do 50 plików projektu dla wybranej inwestycji bezpośrednio z tej zakładki albo z Zarządzania. Klient widzi opublikowane pliki, może je przeglądać (PDF/zdjęcia) i pobierać. Publikację można cofnąć, a plik przenieść do kosza. Projekty nie są księgowane i nie zmieniają salda. Dane dawnych zakupów pozostają w bazie jako historia, bez widoku ani formularza zakupów w portalu.
+
+## Dokładna kontrola przed księgowaniem
+
+Odczyt przechodzi przez wszystkie strony PDF (bez wcześniejszego limitu 12 stron). Po niepełnym lub niepotwierdzonym odczycie tekstu uruchamia dodatkowy OCR pozostałych stron i porównuje oba odczyty. Sprzeczne numery, daty i kwoty blokują automatyczne księgowanie.
+
+Faktura wymaga potwierdzenia brutto obliczeniem netto + VAT albo spójnym podsumowaniem stawek VAT. Weryfikowane są sumy i stawki, z tolerancją 1 grosza dla sum i 2 groszy dla obliczenia stawki. Nieczytelne podsumowanie, korekta, zaliczka/pro forma, obca waluta lub plik zawierający różne faktury wymagają kontroli administratora. Dokument płatności nie musi zawierać podsumowania VAT. Administrator nadal może ręcznie zatwierdzić dane po sprawdzeniu oryginału. Automatyczny odczyt nie gwarantuje bezbłędności każdego układu dokumentu; wynik niepewny nie odejmuje salda.

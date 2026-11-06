@@ -46,16 +46,16 @@ export default function Home(){
  async function openDoc(d:Row,showPreview=false){await run(async()=>{const response=await api('/api/document/'+d.id),file=await response.blob(),filename=response.headers.get('x-download-name')?decodeURIComponent(response.headers.get('x-download-name')!):d.title;if(showPreview){setPreview({file,title:d.invoice_number?'Faktura '+d.invoice_number:d.title,filename});return}const url=URL.createObjectURL(file),a=document.createElement('a');a.href=url;a.download=filename;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),60000)})}
  async function auth(e:React.FormEvent<HTMLFormElement>){e.preventDefault();const f=new FormData(e.currentTarget);await run(async()=>{const email=String(f.get('email')||''),password=String(f.get('password')||'');let result;if(mode==='register'){result=await db.auth.signUp({email,password,options:{data:{full_name:f.get('full_name')},emailRedirectTo:location.origin}})}else if(mode==='reset'){result=await db.auth.resetPasswordForEmail(email,{redirectTo:location.origin})}else if(mode==='newpassword'){result=await db.auth.updateUser({password})}else result=await db.auth.signInWithPassword({email,password});if(result.error)throw result.error;if(mode==='register'){setMessage('Sprawdź pocztę i potwierdź adres e-mail. Konto wymaga zatwierdzenia przez PROHOUS.');setMode('login')}if(mode==='reset')setMessage('Jeżeli konto istnieje, otrzymasz link do zmiany hasła.');if(mode==='newpassword'){setMode('login');setMessage('Zapisano nowe hasło.')}})}
  async function insert(e:React.FormEvent<HTMLFormElement>,table:string,extra:Row={}){e.preventDefault();const form=e.currentTarget,f=Object.fromEntries(new FormData(form));await run(async()=>{const values:Row={...f,...extra};for(const k of ['amount','quantity','unit_price'])if(k in values)values[k]=Number(values[k]);for(const k of ['client_id','drive_folder_id','invoice_document_id'])if(values[k]==='')values[k]=null;const {error}=await db.from(table).insert(values);if(error)throw error;form.reset();await load();await refresh();setMessage('Zapisano.');})}
- async function readAndBook(documentId:string,file:Blob){
+ async function readAndBook(documentId:string,file:Blob,category='faktury'){
   const {readInvoice}=await import('../lib/invoice-reader');
   const hash=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',await file.arrayBuffer()))).map(b=>b.toString(16).padStart(2,'0')).join('');
-  const result=await readInvoice(file,text=>setMessage(text));
+  const result=await readInvoice(file,text=>setMessage(text),category);
   const {data,error}=await db.from('documents').update({...result,content_sha256:hash}).eq('id',documentId).select('accounting_status').single();
   if(error)throw error;const {data:fresh,error:statusError}=await db.from('documents').select('accounting_status').eq('id',documentId).single();if(statusError)throw statusError;return fresh.accounting_status;
  }
  async function analyzeDocument(d:Row){await run(async()=>{
   const response=await api('/api/document/'+d.id),blob=await response.blob();
-  try{const status=await readAndBook(d.id,new Blob([blob],{type:d.mime_type||blob.type}));await refresh();setMessage(status==='booked'?'Odczytano dane i odjęto kwotę od salda.':status==='duplicate'?'Dokument rozliczono wcześniej. Nie odjęto kwoty ponownie.':'Sprawdź i uzupełnij dane dokumentu, następnie kliknij Zapisz i zaksięguj.');}
+  try{const status=await readAndBook(d.id,new Blob([blob],{type:d.mime_type||blob.type}),d.category);await refresh();setMessage(status==='booked'?'Odczytano dane i odjęto kwotę od salda.':status==='duplicate'?'Dokument rozliczono wcześniej. Nie odjęto kwoty ponownie.':'Sprawdź i uzupełnij dane dokumentu, następnie kliknij Zapisz i zaksięguj.');}
   catch(error){await db.from('documents').update({accounting_note:error instanceof Error?error.message:'Sprawdź dane ręcznie.',auto_book:false}).eq('id',d.id);await refresh();throw error}
  })}
  async function saveDocumentDetails(d:Row,f:FormData){
@@ -80,7 +80,7 @@ export default function Home(){
      if(saveError){const {error:cleanupError}=await db.storage.from(UPLOAD_BUCKET).remove([path]);if(cleanupError)throw Error('Nie zapisano dokumentu; przesłany plik wymaga usunięcia przez administratora.');throw saveError}
      saved++;
      if(['faktury','platnosci'].includes(category)&&document){
-      try{setMessage(`Odczyt i księgowanie ${index+1}/${files.length}: ${file.name}`);const status=await readAndBook(document.id,new Blob([file],{type:mime}));if(status==='booked')booked++;else if(status==='duplicate')duplicates++;else review++}
+      try{setMessage(`Odczyt i księgowanie ${index+1}/${files.length}: ${file.name}`);const status=await readAndBook(document.id,new Blob([file],{type:mime}),category);if(status==='booked')booked++;else if(status==='duplicate')duplicates++;else review++}
       catch(error){review++;await db.from('documents').update({accounting_note:error instanceof Error?error.message:'Sprawdź dane dokumentu ręcznie.',auto_book:false}).eq('id',document.id)}
      }
     }catch(error){failures.push(`${file.name}: ${error instanceof Error?error.message:'Nie udało się przesłać pliku.'}`)}
