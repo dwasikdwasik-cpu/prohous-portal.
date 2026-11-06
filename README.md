@@ -42,3 +42,9 @@ Utwórz konto usługi w projekcie Google Cloud, włącz Google Drive API. Dodaj 
 `npm test` zachowuje testy polityki pobierania i uruchamia dodatkowo testy SQL w lokalnym PostgreSQL/WASM (PGlite): migracje, izolacja dwóch klientów, ukrycie szkiców, blokada kont oczekujących, zakaz samodzielnego nadania administratora i księgowania przez klienta, dostęp administratora, zgodność faktury z inwestycją. Testy nie łączą się z rzeczywistą bazą.
 
 Kompilacja i testy SQL nie zastępują testu na wdrożeniu z dwoma prawdziwymi kontami i prywatnym folderem Drive. Przed zaproszeniem klientów sprawdź e-mail potwierdzający, reset hasła, zatwierdzenie kont, pobranie plików, odcięcie dostępu po blokadzie, kopie zapasowe i treść informacji o przetwarzaniu danych. Faktyczne dane klientów nie są dołączone do repozytorium.
+
+## Przesyłanie plików przez portal
+
+Administrator wybiera inwestycję i w Zarządzaniu używa formularza „Dodaj pliki z komputera”. Obsługiwane są PDF, JPG, PNG, WEBP, GIF, DOCX i XLSX, maksymalnie 25 MB na plik i 50 plików w partii. Przesyłanie odbywa się bezpośrednio do prywatnego magazynu Supabase `portal-documents`; nie kopiuje plików na Google Drive. Migracja `20261106070406_portal_private_uploads.sql` tworzy magazyn oraz reguły dostępu. Dotychczasowe dokumenty Drive działają bez zmian.
+
+Pliki trafiają do wybranej inwestycji jako szkice. Przycisk „Udostępnij wszystkie” publikuje wyłącznie szkice tej inwestycji; nie zmienia przypisania klientów. Częściowe niepowodzenie grupowego przesyłania pokazuje liczbę dodanych plików i listę błędów. Udane pliki zostają zapisane. Pobranie wymaga uprawnienia do dokumentu i zapisu audytu; adres pobrania wygasa po 60 sekundach.
