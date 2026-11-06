@@ -7,14 +7,19 @@
     "build": "next build",
     "start": "next start",
     "test": "node --test tests/*.test.mjs && node tests/rls.mjs",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "prebuild": "node scripts/prepare-invoice-ocr.mjs",
+    "predev": "node scripts/prepare-invoice-ocr.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.49.0",
+    "@tesseract.js-data/pol": "1.0.0",
     "@vercel/oidc": "4.0.6",
     "next": "^15.5.29",
+    "pdfjs-dist": "6.5.438",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "tesseract.js": "7.0.0"
   },
   "devDependencies": {
     "@electric-sql/pglite": "^0.5.15",

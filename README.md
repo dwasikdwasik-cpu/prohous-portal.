@@ -56,3 +56,15 @@ Administrator może użyć „Usuń” przy pliku w Zarządzaniu. Dokument trafi
 ## Ustawienia konta
 
 „Moje konto” / „Ustawienia konta” pozwala zalogowanemu użytkownikowi zmienić własny adres e-mail i hasło (minimum 12 znaków, powtórzenie hasła). Zmiany przechodzą przez Supabase Auth. Zmiana adresu wymaga potwierdzeń e-mail; trigger synchronizuje wyłącznie potwierdzony `auth.users.email` do profilu, bez zmiany identyfikatora, roli i inwestycji. Przy wymaganej ponownej weryfikacji hasła formularz obsługuje kod z `reauthenticate()`. Administrator może wysłać klientowi link do zmiany hasła, bez poznawania jego hasła. Operacje te wymagają działającego SMTP.
+
+## Automatyczne rozliczanie dokumentów
+
+Nowe pliki w kategorii Faktury lub Dokumenty płatności są analizowane w przeglądarce administratora (tekst PDF lub lokalny OCR zdjęcia/skanu). Numer, data wystawienia i kwota brutto są zapisywane w dokumencie. Jednoznaczny odczyt w PLN uruchamia transakcyjne księgowanie wydatku w tej samej inwestycji, również przy przesyłaniu grupowym. Publikacja pliku jest niezależna od rozliczenia.
+
+Nieczytelne/niepełne dane, rozbieżne kwoty, inne waluty, korekty i pro formy trafiają do sprawdzenia. Administrator może poprawić dane i użyć „Zapisz i zaksięguj”. Dla wcześniej dodanych plików służy „Odczytaj i zaksięguj”. Nie wykonujemy automatycznej zmiany sald dla starych dokumentów podczas wdrożenia. Parser nie interpretuje dowolnych układów faktur bezbłędnie. OCR przetwarza do 12 stron PDF i wymaga dostępnej przeglądarki; przerwaną analizę można ponowić.
+
+Unikalne powiązanie dokumentu, klucz numer/rok/wystawca oraz skrót SHA-256 pliku ograniczają duplikaty. Dowód płatności z tym samym numerem faktury i rokiem jest dodatkowo porównywany z fakturami inwestycji. W razie podejrzenia duplikatu saldo nie jest ponownie pomniejszane. Nie należy drugi raz ręcznie księgować wydatku dodanego przez automat. Stare ręczne operacje bez powiązanego dokumentu wymagają osobnego sprawdzenia.
+
+Po zaksięgowaniu dane finansowe dokumentu są blokowane. Usunięcie go do kosza lub przywrócenie nie zmienia historii rozliczeń. Korekty księguje się jako osobne przeciwne operacje, z odniesieniem do oryginału. Obecne saldo działa osobno dla każdej inwestycji. Nie ma automatycznych przeliczeń walut.
+
+Worker PDF, kod OCR i polski model językowy są kopiowane z przypiętych paczek npm przez `scripts/prepare-invoice-ocr.mjs` przy budowaniu aplikacji. Dokumenty nie są wysyłane do usług rozpoznawania osób trzecich.
