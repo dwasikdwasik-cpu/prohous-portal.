@@ -52,3 +52,7 @@ Pliki trafiają do wybranej inwestycji jako szkice. Przycisk „Udostępnij wszy
 ## Usuwanie plików
 
 Administrator może użyć „Usuń” przy pliku w Zarządzaniu. Dokument trafia do kosza wybranej inwestycji i jest wycofywany z publikacji. „Przywróć” odtwarza go jako szkic. Kosz nie kasuje oryginałów Drive ani danych źródłowych. Import Drive nie odtwarza automatycznie plików z kosza, a publikacja grupowa je pomija. Nowe pobrania plików z kosza są blokowane; wydany wcześniej adres prywatnego pliku może pozostać ważny do 60 sekund. Migracja: `20261106071638_document_trash.sql`.
+
+## Ustawienia konta
+
+„Moje konto” / „Ustawienia konta” pozwala zalogowanemu użytkownikowi zmienić własny adres e-mail i hasło (minimum 12 znaków, powtórzenie hasła). Zmiany przechodzą przez Supabase Auth. Zmiana adresu wymaga potwierdzeń e-mail; trigger synchronizuje wyłącznie potwierdzony `auth.users.email` do profilu, bez zmiany identyfikatora, roli i inwestycji. Przy wymaganej ponownej weryfikacji hasła formularz obsługuje kod z `reauthenticate()`. Administrator może wysłać klientowi link do zmiany hasła, bez poznawania jego hasła. Operacje te wymagają działającego SMTP.

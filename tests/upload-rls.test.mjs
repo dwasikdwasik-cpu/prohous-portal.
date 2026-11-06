@@ -10,6 +10,7 @@ test('private uploads preserve client isolation, drafts, immutable sources and s
  await db.exec(fs.readFileSync('supabase/upgrade-v2.sql','utf8'));
  await db.exec(fs.readFileSync('supabase/migrations/20261106070406_portal_private_uploads.sql','utf8'));
  await db.exec(fs.readFileSync('supabase/migrations/20261106071638_document_trash.sql','utf8'));
+ await db.exec(fs.readFileSync('supabase/migrations/20261106072000_sync_confirmed_account_email.sql','utf8'));
  const ids=[1,2,3,4].map(n=>'00000000-0000-0000-0000-00000000000'+n);
  for(const id of ids)await db.query(`insert into auth.users values($1,$2,'{}')`,[id,id+'@test.invalid']);
  await db.query(`update profiles set role='admin',status='approved' where id=$1`,[ids[0]]);
@@ -52,6 +53,12 @@ test('private uploads preserve client isolation, drafts, immutable sources and s
  await asUser(ids[1],async()=>assert.equal((await db.query('select * from documents')).rows.length,0));
  await db.query(`update documents set published=true where storage_path=$1`,[paths[0]]);
  await asUser(ids[1],async()=>assert.equal((await db.query('select * from storage.objects')).rows.length,1));
+ const before=(await db.query('select id,role,status from profiles where id=$1',[ids[1]])).rows[0];
+ await db.query('update auth.users set email=$1 where id=$2',['changed@test.invalid',ids[1]]);
+ const after=(await db.query('select id,email,role,status from profiles where id=$1',[ids[1]])).rows[0];
+ assert.equal(after.email,'changed@test.invalid');assert.deepEqual({id:after.id,role:after.role,status:after.status},before);
+ assert.equal((await db.query('select client_id from investments where id=$1',[a])).rows[0].client_id,ids[1]);
+ await assert.rejects(()=>asUser(ids[1],()=>db.query('select public.sync_confirmed_account_email()')));
  assert.equal((await db.query(`select public from storage.buckets where id='portal-documents'`)).rows[0].public,false);
  }finally{await db.close()}
 });
