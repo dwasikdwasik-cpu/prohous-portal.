@@ -2,15 +2,15 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import {PGlite} from '@electric-sql/pglite';
-test('electrician reads global published projects, uploads own photos, never reads finance or other clients',async()=>{
+for(const role of ['electrician','plumber'])test(`${role} reads global published projects, uploads own photos, never reads finance or other clients`,async()=>{
  const db=new PGlite();try{
  await db.exec(`create schema auth;create table auth.users(id uuid primary key,email text,raw_user_meta_data jsonb);create function auth.uid() returns uuid language sql stable as $$select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid$$;create role authenticated;create role anon;grant usage on schema public,auth to authenticated;create schema storage;create table storage.buckets(id text primary key,name text,public boolean,file_size_limit bigint,allowed_mime_types text[]);create table storage.objects(bucket_id text,name text,owner_id text,metadata jsonb);alter table storage.objects enable row level security;grant usage on schema storage to authenticated;grant select,insert,update,delete on storage.objects to authenticated;`);
  await db.exec(fs.readFileSync('supabase/schema.sql','utf8').replace('create extension if not exists pgcrypto;',''));
  await db.exec(fs.readFileSync('supabase/upgrade-v2.sql','utf8'));
- for(const path of ['20261106070406_portal_private_uploads.sql','20261106071638_document_trash.sql','20261106073023_automatic_invoice_ledger.sql','20261106080421_automatic_document_publication.sql','20261106080958_investment_project_files.sql','20261106092814_electrician_projects_and_photos.sql'])await db.exec(fs.readFileSync('supabase/migrations/'+path,'utf8'));
+ for(const path of ['20261106070406_portal_private_uploads.sql','20261106071638_document_trash.sql','20261106073023_automatic_invoice_ledger.sql','20261106080421_automatic_document_publication.sql','20261106080958_investment_project_files.sql','20261106092814_electrician_projects_and_photos.sql','20261106093850_plumber_project_access.sql'])await db.exec(fs.readFileSync('supabase/migrations/'+path,'utf8'));
  const [admin,clientA,clientB,electrician,otherElectrician]=[1,2,3,4,5].map(n=>'00000000-0000-0000-0000-00000000000'+n);
  for(const id of [admin,clientA,clientB,electrician,otherElectrician])await db.query(`insert into auth.users values($1,$2,'{}')`,[id,id+'@test.invalid']);
- await db.query(`update profiles set role=case when id=$1 then 'admin' when id in ($2,$3) then 'electrician' else 'client' end,status='approved'`,[admin,electrician,otherElectrician]);
+ await db.query(`update profiles set role=case when id=$1 then 'admin' when id in ($2,$3) then $4 else 'client' end,status='approved'`,[admin,electrician,otherElectrician,role]);
  const a=(await db.query(`insert into investments(name,client_id) values('A',$1) returning id`,[clientA])).rows[0].id;
  const b=(await db.query(`insert into investments(name,client_id) values('B',$1) returning id`,[clientB])).rows[0].id;
  const documents=[];
