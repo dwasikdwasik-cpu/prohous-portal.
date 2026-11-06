@@ -72,3 +72,9 @@ Worker PDF, kod OCR i polski model językowy są kopiowane z przypiętych paczek
 ## Podgląd faktur klienta
 
 Spis faktur i lista dokumentów mają osobne przyciski „Podgląd” i „Pobierz”. PDF jest renderowany w portalu z nawigacją po stronach; zdjęcia faktur są wyświetlane jako obraz. Podgląd pobiera plik przez tę samą autoryzowaną ścieżkę co pobieranie, z kontrolą inwestycji, publikacji i kosza. Nie tworzy publicznych odnośników. Inne formaty można pobrać, bez osadzania ich zawartości w portalu. Klient widzi tylko dokumenty opublikowane dla swojej inwestycji.
+
+## Widoczność przesłanych faktur
+
+Administrator widzi w zakładkach Faktury i Wszystkie dokumenty także szkice, z oznaczeniem widoczności i przyciskiem publikacji. Klient nadal otrzymuje wyłącznie opublikowane pliki swojej inwestycji. Przy przesyłaniu można zaznaczyć „Od razu udostępnij przesłane pliki klientowi tej inwestycji”; opcja jest domyślnie włączona. Widok odświeża dane po powrocie do karty i co 30 sekund. Import rozpoznaje nazwy eksportów `_KSEF_` jako faktury.
+
+Nowe dokumenty są domyślnie publikowane, również przy imporcie Drive. „Cofnij udostępnienie” w zakładce Faktury lub w Zarządzaniu wycofuje widoczność dla klienta. Ponowny import pomija istniejące rekordy i nie cofa tej decyzji. Usunięcie do kosza i przywrócenie zachowują zasadę przywracania jako szkic. Migracja `20261106080421_automatic_document_publication.sql` zmienia wyłącznie wartość domyślną dla nowych rekordów.

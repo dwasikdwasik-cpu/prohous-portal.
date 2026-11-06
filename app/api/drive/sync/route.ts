@@ -13,9 +13,9 @@ export async function POST(req:NextRequest){try{
  const params=new URLSearchParams({q:`'${folder}' in parents and trashed = false`,fields:'nextPageToken,files(id,name,mimeType)',pageSize:'100',supportsAllDrives:'true',includeItemsFromAllDrives:'true'});if(page)params.set('pageToken',page);
  const data=await (await driveGet('files?'+params)).json();
  folders.push(...(data.files||[]).filter((f:any)=>f.mimeType==='application/vnd.google-apps.folder').map((f:any)=>f.id));
- const rows=(data.files||[]).filter((f:any)=>!['application/vnd.google-apps.folder','application/vnd.google-apps.shortcut'].includes(f.mimeType)).map((f:any)=>({investment_id:inv.id,drive_file_id:f.id,title:f.name,category:f.mimeType.startsWith('image/')?'zdjecia':/faktur|invoice/i.test(f.name)?'faktury':'inne',mime_type:f.mimeType,published:false}));
+ const rows=(data.files||[]).filter((f:any)=>!['application/vnd.google-apps.folder','application/vnd.google-apps.shortcut'].includes(f.mimeType)).map((f:any)=>({investment_id:inv.id,drive_file_id:f.id,title:f.name,category:f.mimeType.startsWith('image/')?'zdjecia':/faktur|invoice|_ksef_/i.test(f.name)?'faktury':'inne',mime_type:f.mimeType,published:true}));
  if(rows.length){const {data:saved,error}=await db.from('documents').upsert(rows,{onConflict:'investment_id,drive_file_id',ignoreDuplicates:true}).select('id');if(error)throw error;added+=saved?.length||0;}scanned+=rows.length;page=data.nextPageToken;
  }while(page);
  }
- return Response.json({scanned,added,message:`Dodano ${added} nowych plików do zatwierdzenia. Sprawdzono także podfoldery.`},{headers:{'Cache-Control':'no-store'}});
+ return Response.json({scanned,added,message:`Dodano ${added} nowych plików, automatycznie udostępnionych klientowi. Sprawdzono także podfoldery.`},{headers:{'Cache-Control':'no-store'}});
  }catch(e){return apiError(e)}}
