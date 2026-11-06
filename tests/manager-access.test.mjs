@@ -39,6 +39,28 @@ test('manager administers documents and clients but cannot read balances or acqu
   assert.equal((await db.query(`select * from ledger_entries where event_document_id=$1`,[invoice])).rows.length,2);
  });
  await asUser(client,async()=>assert.equal((await db.query('select * from ledger_entries where investment_id=$1',[a])).rows.length,4));
+ // Investment trash must hide all related customer and installer data without changing finances.
+ await asUser(manager,async()=>{
+  await db.query('update investments set deleted_at=now() where id=$1',[a]);
+  await assert.rejects(()=>db.query(`insert into documents(investment_id,title,category,drive_file_id) values($1,'Archived upload','projekty','archived-upload')`,[a]));
+ });
+ await asUser(client,async()=>{
+  for(const table of ['investments','documents','ledger_entries'])assert.equal((await db.query('select * from '+table+(table==='investments'?' where id=$1':' where investment_id=$1'),[a])).rows.length,0,table);
+  assert.equal((await db.query('select * from storage.objects')).rows.length,0);
+  assert.equal((await db.query('update investments set deleted_at=null where id=$1 returning id',[a])).rows.length,0);
+ });
+ await asUser(other,async()=>{
+  assert.equal((await db.query('select * from investments where id=$1',[a])).rows.length,0);
+  assert.equal((await db.query('select * from documents where investment_id=$1',[a])).rows.length,0);
+  await assert.rejects(()=>db.query(`insert into storage.objects values('portal-documents',$1,$2,'{"mimetype":"image/jpeg"}')`,[a+'/'+crypto.randomUUID()+'.jpg',other]));
+ });
+ await asUser(admin,async()=>assert.equal(Number((await db.query(`select sum(case when type in ('deposit','expense_reversal') then amount else -amount end) as balance from ledger_entries where investment_id=$1`,[a])).rows[0].balance),900));
+ await asUser(manager,async()=>{await db.query('update investments set deleted_at=null where id=$1',[a])});
+ await asUser(client,async()=>{
+  assert.equal((await db.query('select * from investments where id=$1',[a])).rows.length,1);
+  assert.equal((await db.query('select * from ledger_entries where investment_id=$1',[a])).rows.length,4);
+  assert.equal((await db.query('select * from storage.objects')).rows.length,1);
+ });
  await db.query('update investments set client_id=$1 where id=$2',[manager,a]);
  await asUser(manager,async()=>assert.equal((await db.query('select * from ledger_entries')).rows.length,0));
  await db.exec('set role service_role');await db.query('update profiles set full_name=$1 where id=$2',['System update',manager]);await db.exec('reset role');
