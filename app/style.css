@@ -5,14 +5,14 @@
 header>div{flex-wrap:wrap}header>div>span{overflow-wrap:anywhere;min-width:0}
 
 /* Original company artwork, framed within its printed white margins. */
-.logo .brand-mark{display:block;width:100%;height:auto;aspect-ratio:885/755;background:white;border-radius:8px}
-.auth-brand .logo{width:210px;padding:14px;background:white;border-radius:12px;color:var(--ink)}
+.logo .brand-mark{display:block;width:100%;height:auto;object-fit:contain;background:transparent;border-radius:0}
+.auth-brand .logo{width:210px;padding:14px;background:transparent;border-radius:0;color:var(--ink)}
 .auth-brand .logo span{text-align:center;font-size:8px;letter-spacing:2px;margin-top:12px}
 aside .logo{padding:0}aside .logo .brand-mark{max-width:180px;margin:auto}aside .logo span{text-align:center;font-size:8px;letter-spacing:2px}
 @media(max-width:760px){.auth-brand .logo{width:160px;padding:10px}aside .logo{display:flex;align-items:center;gap:15px}aside .logo .brand-mark{width:110px;margin:0}aside .logo span{margin:0}nav{margin-top:14px}}
 
-/* Monochrome brand: black artwork while retaining the original white background. */
-.logo .brand-mark{filter:grayscale(1) brightness(.55) contrast(100)}
+/* Transparent monochrome artwork blends into the portal background. */
+.logo .brand-mark{filter:none}
 
 button.danger{color:#9b4018;border-color:#efc5a1}details>summary{cursor:pointer;font-weight:700;font-size:18px}details .doc-row>div{flex:1;min-width:0}
 
