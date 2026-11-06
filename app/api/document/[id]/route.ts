@@ -9,8 +9,8 @@ export async function GET(req:NextRequest,{params}:{params:Promise<{id:string}>}
  try{
  const {db,user}=await authorize(req);const {id}=await params;let folder:string;
  if(!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id))throw Error('404');
- const {data:uploaded,error:lookupError}=await db.from('documents').select('id,investment_id,storage_path,title').eq('id',id).maybeSingle();
- if(lookupError)throw lookupError;if(!uploaded)throw Error('404');
+ const {data:uploaded,error:lookupError}=await db.from('documents').select('id,investment_id,storage_path,title,deleted_at').eq('id',id).maybeSingle();
+ if(lookupError)throw lookupError;if(!uploaded||uploaded.deleted_at)throw Error('404');
  if(uploaded.storage_path)return serveUploadedDocument(uploaded,{
   async info(path:string){const {data,error}=await db.storage.from(UPLOAD_BUCKET).info(path);if(error)throw error;return data},
   async sign(path:string,name:string){const {data,error}=await db.storage.from(UPLOAD_BUCKET).createSignedUrl(path,60,{download:name});if(error)throw error;return data.signedUrl},

@@ -48,3 +48,7 @@ Kompilacja i testy SQL nie zastępują testu na wdrożeniu z dwoma prawdziwymi k
 Administrator wybiera inwestycję i w Zarządzaniu używa formularza „Dodaj pliki z komputera”. Obsługiwane są PDF, JPG, PNG, WEBP, GIF, DOCX i XLSX, maksymalnie 25 MB na plik i 50 plików w partii. Przesyłanie odbywa się bezpośrednio do prywatnego magazynu Supabase `portal-documents`; nie kopiuje plików na Google Drive. Migracja `20261106070406_portal_private_uploads.sql` tworzy magazyn oraz reguły dostępu. Dotychczasowe dokumenty Drive działają bez zmian.
 
 Pliki trafiają do wybranej inwestycji jako szkice. Przycisk „Udostępnij wszystkie” publikuje wyłącznie szkice tej inwestycji; nie zmienia przypisania klientów. Częściowe niepowodzenie grupowego przesyłania pokazuje liczbę dodanych plików i listę błędów. Udane pliki zostają zapisane. Pobranie wymaga uprawnienia do dokumentu i zapisu audytu; adres pobrania wygasa po 60 sekundach.
+
+## Usuwanie plików
+
+Administrator może użyć „Usuń” przy pliku w Zarządzaniu. Dokument trafia do kosza wybranej inwestycji i jest wycofywany z publikacji. „Przywróć” odtwarza go jako szkic. Kosz nie kasuje oryginałów Drive ani danych źródłowych. Import Drive nie odtwarza automatycznie plików z kosza, a publikacja grupowa je pomija. Nowe pobrania plików z kosza są blokowane; wydany wcześniej adres prywatnego pliku może pozostać ważny do 60 sekund. Migracja: `20261106071638_document_trash.sql`.

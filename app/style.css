@@ -13,3 +13,5 @@ aside .logo{padding:0}aside .logo .brand-mark{max-width:180px;margin:auto}aside 
 
 /* Monochrome brand: black artwork while retaining the original white background. */
 .logo .brand-mark{filter:grayscale(1) brightness(.55) contrast(100)}
+
+button.danger{color:#a02e28;border-color:#e8c6c3}details>summary{cursor:pointer;font-weight:700;font-size:18px}details .doc-row>div{flex:1;min-width:0}

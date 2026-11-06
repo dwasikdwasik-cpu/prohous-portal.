@@ -26,3 +26,5 @@ test('audit failure never releases the storage URL',async()=>{
 test('oversized storage downloads are rejected before signing',async()=>{
  const r=await serveUploadedDocument(doc,{async info(){return {size:MAX_UPLOAD_BYTES+1,contentType:'application/pdf'}},async sign(){assert.fail('must not sign')}});assert.equal(r.status,413);
 });
+
+test("trashed portal uploads do not release a download URL",async()=>{const r=await serveUploadedDocument({...doc,deleted_at:new Date().toISOString()},{info(){assert.fail("must not read trashed object")}});assert.equal(r.status,404)});

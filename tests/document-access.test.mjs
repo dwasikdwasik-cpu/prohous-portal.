@@ -25,3 +25,5 @@ test('Drive errors do not reveal server secrets',async()=>{const s=fixture();s.m
 
 test('photo responses retain safe image MIME for the private gallery',async()=>{const s=fixture();s.metadata=async()=>({parents:['folder'],name:'Zdjecie.jpg',mimeType:'image/jpeg',size:'3'});const r=await serveDocument(request(),id,s);assert.equal(r.status,200);assert.equal(r.headers.get('content-type'),'image/jpeg')});
 test('native Google documents are returned as PDF',async()=>{const s=fixture();s.content=async()=>({bytes:new Uint8Array([1]),exported:true});const r=await serveDocument(request(),id,s);assert.equal(r.status,200);assert.equal(r.headers.get('content-type'),'application/pdf');assert.match(decodeURIComponent(r.headers.get('x-download-name')),/\.pdf$/)});
+
+test("trashed Drive documents never contact Google",async()=>{const s=fixture();s.authorize=async()=>({user:{id:"user"},document:{drive_file_id:"file",deleted_at:new Date().toISOString()},folderId:"folder"});assert.equal((await serveDocument(request(),id,s)).status,404);assert.deepEqual(s.calls,[])});
