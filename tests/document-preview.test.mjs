@@ -1,0 +1,4 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {previewType} from '../lib/document-preview.mjs';
+test('PDF invoices returned by Drive as octet-stream are recognized from their bytes',async()=>{assert.equal(await previewType(new Blob(['%PDF-1.7\n'],{type:'application/octet-stream'})),'application/pdf')});
+test('image invoices are recognized independently of their document category',async()=>{for(const [bytes,type] of [[new Uint8Array([255,216,255,224]),'image/jpeg'],[new Uint8Array([137,80,78,71,13,10,26,10]),'image/png'],['GIF89a image','image/gif'],['RIFF0000WEBP image','image/webp']])assert.equal(await previewType(new Blob([bytes])),type)});
+test('HTML and SVG disguised as invoice files are not embedded',async()=>{for(const type of ['application/pdf','image/jpeg','image/svg+xml'])assert.equal(await previewType(new Blob(['<html><script>bad()</script></html>'],{type})),null)});

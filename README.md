@@ -68,3 +68,7 @@ Unikalne powiązanie dokumentu, klucz numer/rok/wystawca oraz skrót SHA-256 pli
 Po zaksięgowaniu dane finansowe dokumentu są blokowane. Usunięcie go do kosza lub przywrócenie nie zmienia historii rozliczeń. Korekty księguje się jako osobne przeciwne operacje, z odniesieniem do oryginału. Obecne saldo działa osobno dla każdej inwestycji. Nie ma automatycznych przeliczeń walut.
 
 Worker PDF, kod OCR i polski model językowy są kopiowane z przypiętych paczek npm przez `scripts/prepare-invoice-ocr.mjs` przy budowaniu aplikacji. Dokumenty nie są wysyłane do usług rozpoznawania osób trzecich.
+
+## Podgląd faktur klienta
+
+Spis faktur i lista dokumentów mają osobne przyciski „Podgląd” i „Pobierz”. PDF jest renderowany w portalu z nawigacją po stronach; zdjęcia faktur są wyświetlane jako obraz. Podgląd pobiera plik przez tę samą autoryzowaną ścieżkę co pobieranie, z kontrolą inwestycji, publikacji i kosza. Nie tworzy publicznych odnośników. Inne formaty można pobrać, bez osadzania ich zawartości w portalu. Klient widzi tylko dokumenty opublikowane dla swojej inwestycji.
