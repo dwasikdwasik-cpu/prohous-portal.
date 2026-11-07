@@ -26,3 +26,5 @@ button.danger{color:#9b4018;border-color:#efc5a1}details>summary{cursor:pointer;
 
 .logo .company-name{display:block;margin-top:10px;color:#111;font-size:14px;font-weight:700;letter-spacing:0;line-height:1.35;text-align:center}
 @media(max-width:760px){.auth-brand .logo .company-name{font-size:12px}aside .logo{display:grid;grid-template-columns:110px 1fr;column-gap:15px;row-gap:4px}aside .logo .brand-mark{grid-row:span 2}aside .logo .company-name{margin:0;text-align:left}aside .logo span{text-align:left;letter-spacing:2px}}
+
+.company-site-link{display:inline-flex;align-items:center;justify-content:center;padding:12px 18px;border:1px solid #eaa66a;border-radius:8px;background:var(--orange);color:var(--ink);font-weight:600;text-decoration:none;white-space:nowrap}.company-site-link:hover{filter:brightness(.95)}.company-site-link:focus-visible{outline:2px solid var(--blue);outline-offset:3px}.auth-right>.company-site-link{margin-bottom:24px}
