@@ -3,7 +3,7 @@ import {authorize,apiError} from '../../../../lib/server';
 import {driveGet,validDriveId} from '../../../../lib/drive';
 export const runtime='nodejs';
 export async function POST(req:NextRequest){try{
- const {db}=await authorize(req,true);const body=await req.json();
+ const {db}=await authorize(req,'document-management');const body=await req.json();
  const {data:inv}=await db.from('investments').select('id,drive_folder_id').eq('id',body.investment_id).single();
  if(!inv)throw new Error('404');if(!inv.drive_folder_id||!validDriveId(inv.drive_folder_id))return Response.json({error:'Wpisz poprawne ID folderu Google Drive.'},{status:400});
  let page:string|undefined,scanned=0,added=0;
