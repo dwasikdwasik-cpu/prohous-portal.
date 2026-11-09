@@ -16,6 +16,7 @@
     "@tesseract.js-data/pol": "1.0.0",
     "@vercel/oidc": "4.0.6",
     "client-zip": "2.5.1",
+    "hls.js": "1.7.4",
     "next": "^15.5.29",
     "pdfjs-dist": "6.5.438",
     "react": "^19.0.0",
