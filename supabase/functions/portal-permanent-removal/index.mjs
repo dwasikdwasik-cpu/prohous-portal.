@@ -14,6 +14,9 @@ Deno.serve(createRemovalHandler({
  },
  requestAccount:(token,id,confirmation)=>rpc(token,'request_portal_account_removal',{p_user_id:id,p_confirmation:confirmation}),
  async deleteAccount(id){const {error}=await service.auth.admin.deleteUser(id,false);if(error)throw error},
+ startDocument:(token,id,confirmation)=>rpc(token,'start_portal_document_removal',{p_document_id:id,p_confirmation:confirmation}),
+ async removeScans(paths){const {error}=await service.storage.from('invoice-intake').remove(paths);if(error)throw error},
+ async finishDocument(id,admin){const {error}=await service.rpc('finish_portal_document_removal',{p_document_id:id,p_actor:admin.id,p_session_id:admin.sessionId});if(error)throw error},
  startInvestment:(token,id,confirmation)=>rpc(token,'start_portal_investment_removal',{p_investment_id:id,p_confirmation:confirmation}),
  async removeFiles(paths){const {error}=await service.storage.from('portal-documents').remove(paths);if(error)throw error},
  async finishInvestment(id,admin){const {error}=await service.rpc('finish_portal_investment_removal',{p_investment_id:id,p_actor:admin.id,p_session_id:admin.sessionId});if(error)throw error}
