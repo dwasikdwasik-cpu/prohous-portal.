@@ -1,7 +1,7 @@
 import {createClient} from '@supabase/supabase-js';
 import {NextRequest} from 'next/server';
 import {portalAccessAllowed} from './portal-access.mjs';
-export async function authorize(req:NextRequest,requirement:boolean|'document-management'=false){
+export async function authorize(req:NextRequest,requirement:boolean|'document-management'|'invoice-intake'=false){
  const token=req.headers.get('authorization')?.match(/^Bearer (.+)$/)?.[1];
  if(!token)throw new Error('401');
  const url=process.env.NEXT_PUBLIC_SUPABASE_URL,key=process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;

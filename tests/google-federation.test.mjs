@@ -31,3 +31,7 @@ for(const response of [{},{accessToken:'drive-token',expireTime:'invalid'},{acce
 test('missing intermediate token prevents impersonation',async()=>{
  let count=0;await assert.rejects(federatedDriveToken(config,async()=>{count++;return Response.json({})}),/502/);assert.equal(count,1);
 });
+
+test('inbox cleanup requests metadata-only write scope without changing normal downloads',async()=>{
+ let count=0;await federatedDriveToken({...config,metadataWrite:true},async(_url,init)=>{count++;if(count===2)assert.deepEqual(JSON.parse(init.body).scope,['https://www.googleapis.com/auth/drive.metadata']);return Response.json(count===1?{access_token:'identity'}:{accessToken:'metadata-token',expireTime:expires})});
+});

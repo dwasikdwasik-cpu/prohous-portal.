@@ -1,6 +1,6 @@
 import {parseInvoiceText} from './invoice-parser.mjs';
 // All pages are read locally; OCR is retried when text fields or totals cannot be verified.
-export async function readInvoice(file:Blob,onProgress:(text:string)=>void=()=>{},category='faktury'){
+export async function readInvoice(file:Blob,onProgress:(text:string)=>void=()=>{},category='faktury',onText?:(text:string)=>void){
  let worker:Awaited<ReturnType<typeof import('tesseract.js').createWorker>>|undefined;
  async function ocr(image:Blob|HTMLCanvasElement){
   if(!worker){onProgress('Uruchamianie dokładnego odczytu…');const {createWorker}=await import('tesseract.js');worker=await createWorker('pol',1,{workerPath:'/ocr/worker.min.js',corePath:'/ocr/core/',langPath:'/ocr/lang/',workerBlobURL:false,logger:event=>{if(event.status==='recognizing text')onProgress(`Dokładny odczyt: ${Math.round(event.progress*100)}%`)}})}
@@ -33,6 +33,7 @@ export async function readInvoice(file:Blob,onProgress:(text:string)=>void=()=>{
    }finally{await task.destroy()}
   }else if(file.type.startsWith('image/')){const r=await ocr(file);text=r.text;confidence=r.confidence;usedOcr=true}
   else throw Error('Odczyt obsługuje PDF i zdjęcia. Uzupełnij dane dokumentu ręcznie.');
+  onText?.(text);
   const result=parseInvoiceText(text,{category});
   if(usedOcr&&confidence<90){result.auto_book=false;result.accounting_note='Dokładność OCR wymaga sprawdzenia. '+result.accounting_note}
   result.accounting_note=`Sprawdzono wszystkie strony: ${pagesRead}. ${result.accounting_note}`;

@@ -88,3 +88,7 @@ Zakładka „Projekty inwestycyjne” zastępuje „Zakupione towary”. Adminis
 Odczyt przechodzi przez wszystkie strony PDF (bez wcześniejszego limitu 12 stron). Po niepełnym lub niepotwierdzonym odczycie tekstu uruchamia dodatkowy OCR pozostałych stron i porównuje oba odczyty. Sprzeczne numery, daty i kwoty blokują automatyczne księgowanie.
 
 Faktura wymaga potwierdzenia brutto obliczeniem netto + VAT albo spójnym podsumowaniem stawek VAT. Weryfikowane są sumy i stawki, z tolerancją 1 grosza dla sum i 2 groszy dla obliczenia stawki. Nieczytelne podsumowanie, korekta, zaliczka/pro forma, obca waluta lub plik zawierający różne faktury wymagają kontroli administratora. Dokument płatności nie musi zawierać podsumowania VAT. Administrator nadal może ręcznie zatwierdzić dane po sprawdzeniu oryginału. Automatyczny odczyt nie gwarantuje bezbłędności każdego układu dokumentu; wynik niepewny nie odejmuje salda.
+
+## Kolejka faktur ze skanera
+
+Panel **Obsługa faktur** pobiera PDF i zdjęcia z folderu SCAN - FA, odczytuje je i przypisuje jednoznaczne dokumenty do klientów. Pozostałe trafiają do ręcznej weryfikacji. Po potwierdzonym zapisie i porównaniu kopii skan jest usuwany z folderu; nie wykonuje się trwałego kasowania. Operator ma dedykowaną rolę bez sald. Instrukcja, dostęp Google i migracja: [docs/INVOICE_INTAKE.md](docs/INVOICE_INTAKE.md).
