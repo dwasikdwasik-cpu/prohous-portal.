@@ -54,3 +54,16 @@ test('isolated issue-date labels read a following date without borrowing deliver
  assert.equal(parseInvoiceText(valid.replace('Data wystawienia: 06.11.2026','Data wystawienia\nData dostawy: 2026-11-06')).invoice_date,null);
  assert.equal(parseInvoiceText(valid.replace('06.11.2026','6.11.2026')).invoice_date,'2026-11-06');
 });
+
+test('scanned fiscal receipt reads its standalone date, PLN total, receipt reference and seller NIP for manual verification',()=>{
+ const r=parseInvoiceText('SKLEP TESTOWY\nNIP 111-22-33-444\nPARAGON FISKALNY\nSUMA PLN 49,47\n000009/1461 #050 KA\nNIP Nabywcy: 5556667788\n2026-08-26 08:14');
+ assert.equal(r.invoice_number,'000009/1461');assert.equal(r.invoice_date,'2026-08-26');assert.equal(r.gross_amount,49.47);assert.equal(r.supplier,'NIP 1112233444');assert.equal(r.auto_book,false);
+});
+test('explicit simplified invoice number takes precedence over receipt reference and never includes the label',()=>{
+ const r=parseInvoiceText('SKLEP TESTOWY\nNIP 1112233444\nPARAGON FISKALNY\nSUMA PLN 98,00\n000151/0739 #053\nNIP Nabywcy: 5556667788\n2026-08-26\n14:12\nNr faktury uproszczonej 800600/010000/26');
+ assert.equal(r.invoice_number,'800600/010000/26');assert.equal(r.invoice_date,'2026-08-26');assert.equal(r.gross_amount,98);assert.equal(r.auto_book,false);
+});
+test('receipt date is not inferred for unrelated documents and ambiguous receipt dates remain unset',()=>{
+ assert.equal(parseInvoiceText('Dokument\n2026-08-26\nSUMA PLN 98,00').invoice_date,null);
+ const r=parseInvoiceText('PARAGON FISKALNY\n2026-08-26\n2026-08-27\nSUMA PLN 98,00');assert.equal(r.invoice_date,null);assert.equal(r.auto_book,false);
+});

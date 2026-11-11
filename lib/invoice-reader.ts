@@ -20,7 +20,7 @@ function improveScan(source:HTMLCanvasElement){
 export async function readInvoice(file:Blob,onProgress:(text:string)=>void=()=>{},category='faktury',onText?:(text:string)=>void){
  let worker:Awaited<ReturnType<typeof import('tesseract.js').createWorker>>|undefined;
  const readings:Reading[]=[],warnings:string[]=[];let pagesRead=1,ocrPages=0;
- async function ocr(image:HTMLCanvasElement,mode:'3'|'11'){
+ async function ocr(image:HTMLCanvasElement,mode:'3'|'11'|'6'){
   if(!worker){onProgress('Uruchamianie odczytu polskich faktur…');const {createWorker}=await import('tesseract.js');
    const loading=createWorker('pol',1,{workerPath:'/ocr/worker.min.js',corePath:'/ocr/core/',langPath:'/ocr/lang/',workerBlobURL:false,errorHandler:()=>{},logger:event=>{if(event.status==='recognizing text')onProgress(`Odczyt obrazu: ${Math.round(event.progress*100)}%`);}});
    try{worker=await timed(loading,60000,'Nie udało się uruchomić OCR w ciągu minuty. Odśwież stronę i ponów odczyt.')}catch(error){void loading.then(w=>w.terminate()).catch(()=>{});throw error}
@@ -34,7 +34,7 @@ export async function readInvoice(file:Blob,onProgress:(text:string)=>void=()=>{
   const first=await ocr(source,'3');let second=first;
   if(!parseInvoiceText(first.text,{category}).auto_book||first.confidence<90){
    onProgress(`Ponowne sprawdzanie, strona ${page}/${pagesRead}: kontrast i drobne napisy…`);const enhanced=improveScan(source);
-   try{second=await ocr(enhanced,'11')}catch(error){warnings.push(error instanceof Error?error.message:'Nie udało się wykonać ponownej kontroli OCR.');if(worker){await worker.terminate();worker=undefined}}finally{enhanced.width=0;enhanced.height=0}
+   try{second=await ocr(enhanced,/paragon\s+fiskalny|faktury\s+uproszczonej/i.test(first.text)?'6':'11')}catch(error){warnings.push(error instanceof Error?error.message:'Nie udało się wykonać ponownej kontroli OCR.');if(worker){await worker.terminate();worker=undefined}}finally{enhanced.width=0;enhanced.height=0}
   }
   return {first,second};
  }

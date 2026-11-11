@@ -48,3 +48,6 @@ Endpoint `POST /api/invoice-intake/:id/read` sprawdza uprawnienia operatora, zap
 
 ### Pliki udostępnionego folderu
 Potwierdzony błąd produkcyjny blokował skan jeszcze przed OCR: `files.get` nie potwierdzał pola `parents`, mimo że plik występował na liście SCAN - FA. Przy niepełnych metadanych przynależność jest teraz potwierdzana przez pełne stronicowanie listy wskazanego folderu i dokładne ID pliku. Wersja jest porównywana przed i po pobraniu, a kopia nadal wymaga zgodnej sumy kontrolnej. Plik niewystępujący w folderze ani plik zmieniony podczas odczytu nie może być zaimportowany. Diagnostyka błędów działa wyłącznie przy istniejących, uwierzytelnionych operacjach operatora.
+
+### Paragony i faktury uproszczone
+Skany oznaczone „PARAGON FISKALNY” rozpoznają datę wydrukowaną bez osobnej etykiety, „SUMA PLN”, NIP sprzedawcy i numer paragonu obok NIP nabywcy. Jawny „Nr faktury uproszczonej” ma pierwszeństwo przed numerem paragonu. Drugi przebieg OCR stosuje do tych dokumentów układ pojedynczego bloku. Pola są podpowiedzią do ręcznego sprawdzenia; takie dokumenty nie są samodzielnie księgowane przez OCR. Niejednoznaczna data lub sprzeczne kwoty nie uzyskują automatycznej akceptacji.
