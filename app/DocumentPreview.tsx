@@ -3,7 +3,8 @@ import {useEffect,useRef,useState} from 'react';
 import type {PDFDocumentProxy,PDFDocumentLoadingTask,RenderTask} from 'pdfjs-dist';
 import {previewType} from '../lib/document-preview.mjs';
 
-export default function DocumentPreview({file,title,filename,onClose}:{file:Blob,title:string,filename:string,onClose:()=>void}){
+export type InvoiceAssignment={client:string,investment:string,confirmed:boolean};
+export default function DocumentPreview({file,title,filename,assignment,onClose}:{file:Blob,title:string,filename:string,assignment?:InvoiceAssignment|null,onClose:()=>void}){
  const dialog=useRef<HTMLDialogElement>(null),canvas=useRef<HTMLCanvasElement>(null);
  const [pdf,setPdf]=useState<PDFDocumentProxy|null>(null),[page,setPage]=useState(1),[image,setImage]=useState(''),[loading,setLoading]=useState(true),[error,setError]=useState('');
  useEffect(()=>{dialog.current?.showModal()},[]);
@@ -39,6 +40,7 @@ export default function DocumentPreview({file,title,filename,onClose}:{file:Blob
  function download(){const url=URL.createObjectURL(file),link=document.createElement('a');link.href=url;link.download=filename;document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),60000)}
  return <dialog ref={dialog} className="document-preview" aria-labelledby="document-preview-title" onCancel={e=>{e.preventDefault();onClose()}}>
   <div className="preview-toolbar"><div><h2 id="document-preview-title">{title}</h2><small>Podgląd dokumentu</small></div><div className="actions"><button type="button" className="secondary" onClick={download}>Pobierz fakturę / dokument</button><button type="button" onClick={onClose} autoFocus>Zamknij ×</button></div></div>
+  {assignment!==undefined&&<div className="preview-assignment" role="status">{assignment?<><strong>{assignment.confirmed?'Przypisano do klienta':'Wybrano do przypisania — jeszcze niezapisane'}</strong><dl><div><dt>Klient</dt><dd>{assignment.client}</dd></div><div><dt>Inwestycja</dt><dd>{assignment.investment}</dd></div></dl></>:<strong>Faktura nie została jeszcze przypisana do klienta.</strong>}</div>}
   {pdf&&<nav className="preview-pagination" aria-label="Strony dokumentu"><button type="button" className="secondary" disabled={page<=1||loading} onClick={()=>setPage(p=>p-1)}>Poprzednia</button><span>Strona {page} z {pdf.numPages}</span><button type="button" className="secondary" disabled={page>=pdf.numPages||loading} onClick={()=>setPage(p=>p+1)}>Następna</button></nav>}
   <div className="preview-content" aria-busy={loading}>{loading&&<p role="status">Wczytywanie podglądu…</p>}{error&&<p role="status" className="notice">{error}</p>}{pdf&&<canvas ref={canvas} aria-label={`Strona ${page} dokumentu ${title}`}/>}{image&&<img src={image} alt={title} onError={()=>setError('Nie udało się wyświetlić zdjęcia. Możesz pobrać plik.')}/>}</div>
  </dialog>;
