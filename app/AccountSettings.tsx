@@ -2,10 +2,10 @@
 import {useState} from 'react';
 import {db} from '../lib/supabase';
 
-export default function AccountSettings({email}:{email:string}){
+export default function AccountSettings({email,readOnly=false}:{email:string,readOnly?:boolean}){
  const [busy,setBusy]=useState(false),[message,setMessage]=useState(''),[needsCode,setNeedsCode]=useState(false);
  async function changeEmail(e:React.FormEvent<HTMLFormElement>){
-  e.preventDefault();const form=e.currentTarget,values=new FormData(form),next=String(values.get('email')||'').trim();
+  e.preventDefault();if(readOnly)return;const form=e.currentTarget,values=new FormData(form),next=String(values.get('email')||'').trim();
   if(next.toLowerCase()===email.toLowerCase()){setMessage('Wpisz nowy adres e-mail.');return}
   setBusy(true);setMessage('');
   try{const {error}=await db.auth.updateUser({email:next},{emailRedirectTo:location.origin});if(error)throw error;form.reset();setMessage('Sprawdź pocztę na dotychczasowym i nowym adresie. Wykonaj wymagane potwierdzenia. Do czasu zakończenia zmiany loguj się dotychczasowym adresem.');}
@@ -13,13 +13,14 @@ export default function AccountSettings({email}:{email:string}){
   finally{setBusy(false)}
  }
  async function sendCode(){
+  if(readOnly)return;
   setBusy(true);setMessage('');
   try{const {error}=await db.auth.reauthenticate();if(error)throw error;setNeedsCode(true);setMessage('Wysłano kod potwierdzający na Twój adres e-mail. Wpisz go poniżej i ponownie zapisz nowe hasło.');}
   catch(error){setMessage(error instanceof Error?error.message:'Nie udało się wysłać kodu.')}
   finally{setBusy(false)}
  }
  async function changePassword(e:React.FormEvent<HTMLFormElement>){
-  e.preventDefault();const form=e.currentTarget,values=new FormData(form),password=String(values.get('password')||'');
+  e.preventDefault();if(readOnly)return;const form=e.currentTarget,values=new FormData(form),password=String(values.get('password')||'');
   if(password!==values.get('confirm')){setMessage('Nowe hasła muszą być identyczne.');return}
   if(password.length<12){setMessage('Nowe hasło musi mieć co najmniej 12 znaków.');return}
   setBusy(true);setMessage('');
@@ -34,12 +35,12 @@ export default function AccountSettings({email}:{email:string}){
   {message&&<p role="status" className="notice">{message}</p>}
   <div className="two-col">
    <section className="panel"><h2>Zmień adres e-mail</h2><p className="muted">Aktualny login: <b>{email}</b></p><p className="muted">Zmiana wymaga potwierdzenia wiadomościami e-mail. Przypisane inwestycje pozostaną na Twoim koncie.</p>
-    <form onSubmit={changeEmail}><label>Nowy adres e-mail<input type="email" name="email" autoComplete="email" required disabled={busy}/></label><button disabled={busy}>Zmień e-mail</button></form>
+    <form onSubmit={changeEmail}><label>Nowy adres e-mail<input type="email" name="email" autoComplete="email" required disabled={busy||readOnly}/></label><button disabled={busy||readOnly}>Zmień e-mail</button></form>
    </section>
    <section className="panel"><h2>Zmień hasło</h2>
-    <form onSubmit={changePassword}><label>Obecne hasło<input type="password" name="current_password" autoComplete="current-password" required disabled={busy}/></label><label>Nowe hasło<input type="password" name="password" autoComplete="new-password" minLength={12} required disabled={busy}/><small>Minimum 12 znaków.</small></label><label>Powtórz nowe hasło<input type="password" name="confirm" autoComplete="new-password" minLength={12} required disabled={busy}/></label>
-    {needsCode&&<><p className="muted">Potwierdź zmianę kodem z e-maila.</p><button className="secondary" type="button" disabled={busy} onClick={sendCode}>Wyślij kod potwierdzający</button><label>Kod z e-maila<input name="nonce" autoComplete="one-time-code" required disabled={busy}/></label></>}
-    <button disabled={busy}>Zapisz nowe hasło</button></form>
+    <form onSubmit={changePassword}><label>Obecne hasło<input type="password" name="current_password" autoComplete="current-password" required disabled={busy||readOnly}/></label><label>Nowe hasło<input type="password" name="password" autoComplete="new-password" minLength={12} required disabled={busy||readOnly}/><small>Minimum 12 znaków.</small></label><label>Powtórz nowe hasło<input type="password" name="confirm" autoComplete="new-password" minLength={12} required disabled={busy||readOnly}/></label>
+    {needsCode&&<><p className="muted">Potwierdź zmianę kodem z e-maila.</p><button className="secondary" type="button" disabled={busy||readOnly} onClick={sendCode}>Wyślij kod potwierdzający</button><label>Kod z e-maila<input name="nonce" autoComplete="one-time-code" required disabled={busy||readOnly}/></label></>}
+    <button disabled={busy||readOnly}>Zapisz nowe hasło</button></form>
    </section>
   </div>
  </>;
