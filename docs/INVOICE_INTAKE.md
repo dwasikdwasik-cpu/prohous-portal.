@@ -35,8 +35,8 @@ Jeżeli po wcześniejszym błędzie faktura czeka w kolejce, wybierz **Odczytaj 
 ### Usuwanie w Obsłudze faktur
 Przycisk **Usuń fakturę** jest dostępny przy nieprzypisanym skanie oraz (dla administratora lub menedżera) przy fakturze zapisanej u klienta. Wymaga potwierdzenia. Skany są wycofywane z kolejki z zachowaniem identyfikatora źródła i wersji, więc synchronizacja nie dodaje ich ponownie. Plik Google Drive pozostaje bez zmian. Przypisana faktura trafia do kosza inwestycji; istniejące wyzwalacze cofają jej zaksięgowane koszty dokładnie raz. Można ją przywrócić w Zarządzaniu, w koszu plików inwestycji. Usunięta pozycja nie pozwala na dalszy odczyt, import ani automatyczne czyszczenie folderu ze starego okna przeglądarki.
 
-### Pełna lista klientów i podgląd przypisania
-Lista korzysta z kont klientów portalu i aktywnej kartoteki CRM (`ph_records`, rodzaj `clients`). Wyszukiwanie obejmuje nazwę klienta i inwestycji. Brak konta logowania lub wcześniejszej inwestycji nie ukrywa klienta z kartoteki. Dopiero przy ręcznym zatwierdzeniu faktury powstaje brakująca inwestycja; jej utworzenie nie tworzy konta logowania i nie nadaje klientowi dostępu. Konta portalu oczekujące na zatwierdzenie pozostają widoczne, lecz nie można do nich importować faktur. Przy wielu inwestycjach należy wskazać właściwą pozycję.
+### Klienci portalu i podgląd przypisania
+Lista przypisywania korzysta wyłącznie z zatwierdzonych kont klientów portalu z aktywną inwestycją (`invoice_intake_targets`). Dodatkowa lista CRM została wycofana na prośbę użytkownika. Wyszukiwanie obejmuje nazwę klienta i inwestycji. Obsługa faktur nie tworzy inwestycji z kartoteki CRM.
 
 Podgląd w Obsłudze faktur pokazuje klienta i inwestycję nad dokumentem. Niezapisany wybór jest wyraźnie oznaczony. Oryginalna zawartość PDF/zdjęcia pozostaje zachowana.
 
