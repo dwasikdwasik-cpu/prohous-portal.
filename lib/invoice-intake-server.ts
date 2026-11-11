@@ -8,15 +8,22 @@ export async function action(db:SupabaseClient,id:string|null,op:string,data:Rec
 export async function item(db:SupabaseClient,id:string){if(!/^[0-9a-f-]{36}$/.test(id))throw Error('404');const {data,error}=await db.from('invoice_intake').select('*').eq('id',id).single();if(error||!data||data.deleted_at)throw Error('404');return data;}
 export async function metadata(fileId:string){const r=await driveGet(`files/${encodeURIComponent(fileId)}?fields=id,name,mimeType,size,parents,version,trashed,capabilities(canTrash,canRemoveMyDriveParent)&supportsAllDrives=true`);return {...await r.json(),etag:r.headers.get('etag')};}
 async function limitedBytes(r:Response){if(!r.body)throw Error('Brak pliku');const reader=r.body.getReader();let size=0;const chunks:Uint8Array[]=[];try{while(true){const {done,value}=await reader.read();if(done)break;size+=value.byteLength;if(size>MAX_SCAN_BYTES)throw Error('Plik przekracza 25 MB');chunks.push(value)}}finally{await reader.cancel()}return new Uint8Array(Buffer.concat(chunks));}
-export async function stageScan(db:SupabaseClient,q:any){
+async function intakeStep<T>(phase:string,work:()=>Promise<T>):Promise<T>{
+ try{return await work()}catch(error){
+  const reason=error instanceof Error?error.message:(typeof error==='object'&&error&&'message' in error?String(error.message):'Błąd usługi');
+  console.error('[invoice-intake]',phase,reason);
+  throw Error(phase+': '+reason);
+ }
+}
+export async function stageScan(db:SupabaseClient,q:any){return intakeStep('Pobieranie kopii skanu',()=>stageScanInternal(db,q));}
+async function stageScanInternal(db:SupabaseClient,q:any){
  if(q.staged_path){const {data,error}=await db.storage.from(INTAKE_BUCKET).download(q.staged_path);if(error)throw error;const bytes=new Uint8Array(await data.arrayBuffer());if(sha256(bytes)!==q.content_sha256)throw Error('Nieprawidłowa kopia skanu');return {bytes,item:q};}
- const before=await metadata(q.drive_file_id);const extension=validateScan(before);if(String(before.version)!==q.source_version)throw Error('Skan zmienił się. Ponownie sprawdź folder.');
- const bytes=await limitedBytes(await driveGet(`files/${encodeURIComponent(q.drive_file_id)}?alt=media&supportsAllDrives=true`));
+ const before=await intakeStep('Metadane Google Drive',()=>metadata(q.drive_file_id));const extension=validateScan(before);if(String(before.version)!==q.source_version)throw Error('Skan zmienił się. Ponownie sprawdź folder.');
+ const bytes=await intakeStep('Pobranie pliku Google Drive',async()=>limitedBytes(await driveGet(`files/${encodeURIComponent(q.drive_file_id)}?alt=media&supportsAllDrives=true`)));
  const after=await metadata(q.drive_file_id);validateScan(after);if(String(after.version)!==q.source_version)throw Error('Skan zmienił się podczas pobierania.');
  await inspectUpload(new File([bytes],`scan.${extension}`,{type:q.mime_type}),'faktury');
  const path=q.id+'/scan.'+extension,hash=sha256(bytes);
- const {error:uploadError}=await db.storage.from(INTAKE_BUCKET).upload(path,bytes,{contentType:q.mime_type,upsert:false,cacheControl:'0'});
- if(uploadError&&String(uploadError.statusCode)!=='409')throw uploadError;
+ await intakeStep('Zapis kopii skanu',async()=>{const {error}=await db.storage.from(INTAKE_BUCKET).upload(path,bytes,{contentType:q.mime_type,upsert:false,cacheControl:'0'});if(error&&String(error.statusCode)!=='409')throw error;});
  const {data:copy,error}=await db.storage.from(INTAKE_BUCKET).download(path);if(error||!copy)throw Error('Nie potwierdzono zapisu skanu');if(sha256(new Uint8Array(await copy.arrayBuffer()))!==hash)throw Error('Zapisana kopia różni się od skanu');
  return {bytes,item:await action(db,q.id,'stage',{sha256:hash})};
 }
