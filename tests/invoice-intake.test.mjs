@@ -1,5 +1,5 @@
 import test from 'node:test';import assert from 'node:assert/strict';
-import {matchInvoiceClient,cleanupImportedScan,validateScan,INVOICE_INBOX_FOLDER} from '../lib/invoice-intake.mjs';
+import {matchInvoiceClient,cleanupImportedScan,validateScan,INVOICE_INBOX_FOLDER,confirmInboxMetadata} from '../lib/invoice-intake.mjs';
 import {managementFixture} from './management-fixture.mjs';
 const targets=[{investment_id:'a',client_name:'Anna Kowalska',investment_name:'Swojczycka 12'},{investment_id:'b',client_name:'Piotr Nowak',investment_name:'Opatowicka 45'}];
 test('only a unique full client/investment name in filename or delivery section assigns automatically',()=>{
@@ -50,4 +50,17 @@ test('intake permissions, private objects and transactional/idempotent assignmen
  });
  await asUser(2,async()=>assert.equal((await db.query('select * from invoice_intake')).rows.length,0));
  }finally{await db.close()}
+});
+
+// Real shared-file regression: metadata can omit parent links even though the folder lists the file.
+test('shared-file membership and version are proven from all inbox pages before staging',async()=>{
+ const calls=[];const meta={id:'file',mimeType:'application/pdf',size:20};
+ const confirmed=await confirmInboxMetadata('file',meta,async token=>{calls.push(token);return token?{files:[{id:'file',version:'3'}]}:{files:[],nextPageToken:'page2'}});
+ assert.equal(validateScan(confirmed),'pdf');assert.equal(confirmed.version,'3');assert.deepEqual(calls,[null,'page2']);
+});
+test('folder confirmation never accepts an absent, moved or changed source',async()=>{
+ const meta={id:'file',mimeType:'application/pdf',size:20,version:'3'};
+ const missing=await confirmInboxMetadata('file',meta,async()=>({files:[{id:'other'}]}));assert.throws(()=>validateScan(missing),/nie należy/);
+ await assert.rejects(()=>confirmInboxMetadata('file',meta,async()=>({files:[{id:'file',version:'4'}]})),/zmienił/);
+ await assert.rejects(()=>confirmInboxMetadata('file',meta,async()=>{throw Error('denied')}),/denied/);
 });

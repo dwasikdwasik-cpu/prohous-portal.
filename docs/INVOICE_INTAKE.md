@@ -42,3 +42,9 @@ Podgląd w Obsłudze faktur pokazuje klienta i inwestycję nad dokumentem. Nieza
 
 ### Odczyt PDF na serwerze
 Endpoint `POST /api/invoice-intake/:id/read` sprawdza uprawnienia operatora, zapisuje zweryfikowaną kopię skanu i odczytuje wszystkie strony cyfrowego PDF na serwerze. Zachowuje kontrolę numeru, daty, waluty oraz netto + VAT = brutto. Skanowane strony i obrazy kieruje do lokalnego OCR w przeglądarce. Niepełne wyniki PDF są pokazywane jako pola do weryfikacji; błąd dalszego zapisu nie usuwa już odczytanych pól. Przetestowano dwa źródłowe PDF-y KSeF w odizolowanym odczycie, bez przypisywania lub księgowania rzeczywistych dokumentów. Brak zalogowanej sesji testowej nie pozwala potwierdzić pełnego importu produkcyjnego.
+
+### Podgląd z ręcznym formularzem
+„Podgląd i ręczne przypisanie” otwiera dokument i formularz w jednym oknie. Operator wybiera inwestycję klienta, wpisuje numer faktury, datę wystawienia, kwotę brutto, walutę i dostawcę, potwierdza dane i używa „Zapisz fakturę”. Formularz nie wymaga uruchomienia OCR. Pola są wspólne dla karty skanu i podglądu; błąd zapisu nie usuwa wprowadzonych wartości.
+
+### Pliki udostępnionego folderu
+Potwierdzony błąd produkcyjny blokował skan jeszcze przed OCR: `files.get` nie potwierdzał pola `parents`, mimo że plik występował na liście SCAN - FA. Przy niepełnych metadanych przynależność jest teraz potwierdzana przez pełne stronicowanie listy wskazanego folderu i dokładne ID pliku. Wersja jest porównywana przed i po pobraniu, a kopia nadal wymaga zgodnej sumy kontrolnej. Plik niewystępujący w folderze ani plik zmieniony podczas odczytu nie może być zaimportowany. Diagnostyka błędów działa wyłącznie przy istniejących, uwierzytelnionych operacjach operatora.

@@ -1,15 +1,17 @@
 'use client';
 import {useEffect,useRef,useState} from 'react';
+import type {ReactNode} from 'react';
 import type {PDFDocumentProxy,PDFDocumentLoadingTask,RenderTask} from 'pdfjs-dist';
 import {previewType} from '../lib/document-preview.mjs';
 
 export type InvoiceAssignment={client:string,investment:string,confirmed:boolean};
-export default function DocumentPreview({file,title,filename,assignment,onClose}:{file:Blob,title:string,filename:string,assignment?:InvoiceAssignment|null,onClose:()=>void}){
+export default function DocumentPreview({file,title,filename,assignment,fileError,children,onClose}:{file:Blob|null,title:string,filename:string,assignment?:InvoiceAssignment|null,fileError?:string,children?:ReactNode,onClose:()=>void}){
  const dialog=useRef<HTMLDialogElement>(null),canvas=useRef<HTMLCanvasElement>(null);
  const [pdf,setPdf]=useState<PDFDocumentProxy|null>(null),[page,setPage]=useState(1),[image,setImage]=useState(''),[loading,setLoading]=useState(true),[error,setError]=useState('');
  useEffect(()=>{dialog.current?.showModal()},[]);
  useEffect(()=>{
   let active=true,task:PDFDocumentLoadingTask|undefined,imageUrl='';setLoading(true);setError('');setPdf(null);setImage('');setPage(1);
+  if(!file){setLoading(!fileError);setError(fileError||'');return}
   (async()=>{
    const mime=await previewType(file);
    if(mime==='application/pdf'){
@@ -22,7 +24,7 @@ export default function DocumentPreview({file,title,filename,assignment,onClose}
    }else if(active){setError('Ten format nie obsługuje podglądu. Możesz pobrać dokument.');setLoading(false)}
   })().catch(()=>{if(active){setError('Nie udało się wyświetlić podglądu. Możesz pobrać dokument.');setLoading(false)}});
   return()=>{active=false;if(imageUrl)URL.revokeObjectURL(imageUrl);if(task)void task.destroy()};
- },[file]);
+ },[file,fileError]);
  useEffect(()=>{
   if(!pdf||!canvas.current)return;
   let active=true,render:RenderTask|undefined;
@@ -37,11 +39,12 @@ export default function DocumentPreview({file,title,filename,assignment,onClose}
   })().catch(()=>{if(active){setError('Nie udało się wyświetlić strony. Możesz pobrać dokument.');setLoading(false)}});
   return()=>{active=false;render?.cancel()};
  },[pdf,page]);
- function download(){const url=URL.createObjectURL(file),link=document.createElement('a');link.href=url;link.download=filename;document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),60000)}
- return <dialog ref={dialog} className="document-preview" aria-labelledby="document-preview-title" onCancel={e=>{e.preventDefault();onClose()}}>
-  <div className="preview-toolbar"><div><h2 id="document-preview-title">{title}</h2><small>Podgląd dokumentu</small></div><div className="actions"><button type="button" className="secondary" onClick={download}>Pobierz fakturę / dokument</button><button type="button" onClick={onClose} autoFocus>Zamknij ×</button></div></div>
+ function download(){if(!file)return;const url=URL.createObjectURL(file),link=document.createElement('a');link.href=url;link.download=filename;document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),60000)}
+ return <dialog ref={dialog} className={'document-preview'+(children?' with-editor':'')} aria-labelledby="document-preview-title" onCancel={e=>{e.preventDefault();onClose()}}>
+  <div className="preview-toolbar"><div><h2 id="document-preview-title">{title}</h2><small>Podgląd dokumentu</small></div><div className="actions"><button type="button" className="secondary" onClick={download} disabled={!file}>Pobierz fakturę / dokument</button><button type="button" onClick={onClose} autoFocus>Zamknij ×</button></div></div>
   {assignment!==undefined&&<div className="preview-assignment" role="status">{assignment?<><strong>{assignment.confirmed?'Przypisano do klienta':'Wybrano do przypisania — jeszcze niezapisane'}</strong><dl><div><dt>Klient</dt><dd>{assignment.client}</dd></div><div><dt>Inwestycja</dt><dd>{assignment.investment}</dd></div></dl></>:<strong>Faktura nie została jeszcze przypisana do klienta.</strong>}</div>}
-  {pdf&&<nav className="preview-pagination" aria-label="Strony dokumentu"><button type="button" className="secondary" disabled={page<=1||loading} onClick={()=>setPage(p=>p-1)}>Poprzednia</button><span>Strona {page} z {pdf.numPages}</span><button type="button" className="secondary" disabled={page>=pdf.numPages||loading} onClick={()=>setPage(p=>p+1)}>Następna</button></nav>}
+  <div className="preview-workspace"><div className="preview-document">{pdf&&<nav className="preview-pagination" aria-label="Strony dokumentu"><button type="button" className="secondary" disabled={page<=1||loading} onClick={()=>setPage(p=>p-1)}>Poprzednia</button><span>Strona {page} z {pdf.numPages}</span><button type="button" className="secondary" disabled={page>=pdf.numPages||loading} onClick={()=>setPage(p=>p+1)}>Następna</button></nav>}
   <div className="preview-content" aria-busy={loading}>{loading&&<p role="status">Wczytywanie podglądu…</p>}{error&&<p role="status" className="notice">{error}</p>}{pdf&&<canvas ref={canvas} aria-label={`Strona ${page} dokumentu ${title}`}/>}{image&&<img src={image} alt={title} onError={()=>setError('Nie udało się wyświetlić zdjęcia. Możesz pobrać plik.')}/>}</div>
+ </div>{children&&<section className="preview-editor" aria-label="Przypisanie i dane faktury">{children}</section>}</div>
  </dialog>;
 }
