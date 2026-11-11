@@ -33,3 +33,10 @@ button.danger{color:#fff;border-color:#000}details>summary{cursor:pointer;font-w
 .camera-list{display:grid;gap:18px}.camera-card{border:1px solid var(--line);border-radius:12px;padding:18px;min-width:0}.camera-card h3{margin:0;overflow-wrap:anywhere}.camera-card .actions{margin-top:14px}.camera-player{margin-top:18px}.camera-player video,.camera-player iframe{display:block;width:100%;aspect-ratio:16/9;min-height:180px;border:0;border-radius:10px;background:#101820}.camera-configuration{margin-top:24px}.camera-configuration form{margin-top:18px;max-width:800px}.camera-panel input[type=url]{overflow-wrap:anywhere}@media(max-width:760px){.camera-card{padding:12px}.camera-card .actions{display:flex;flex-wrap:wrap}.camera-player video,.camera-player iframe{min-height:150px}}
 
 .intake-heading p{max-width:900px}.intake-heading .actions{align-items:center}.intake-heading a{font-size:12px}.intake-filters{margin:0 0 24px;flex-wrap:wrap}.intake-item h2{overflow-wrap:anywhere}.intake-review{border-top:1px solid var(--line);margin-top:20px;padding-top:20px;max-width:800px}.intake-item .notice{margin-top:15px}.intake-item .actions{flex-wrap:wrap}
+
+/* Every navigation item remains reachable on short screens and at high zoom. */
+.app aside{height:100vh;height:100dvh;overflow-y:auto;overflow-x:hidden;overscroll-behavior-y:contain;scrollbar-width:thin;scrollbar-color:#65748b #e3f2ff;-webkit-overflow-scrolling:touch}
+.app aside>*{flex-shrink:0}.app aside nav{flex-shrink:0}.workspace,.content{min-width:0}
+.app aside nav:focus-visible,.table-wrap:focus-visible{outline:2px solid var(--blue);outline-offset:3px}
+.table-wrap{max-width:100%;overflow:auto;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch}.preview-content{max-height:72vh;max-height:72dvh;overflow:auto;overscroll-behavior:contain}
+@media(max-width:760px){.app aside{height:auto;max-height:none;overflow:visible}.app aside nav{display:flex;overflow-x:auto;overflow-y:hidden;scrollbar-width:thin;overscroll-behavior-x:contain;touch-action:pan-x pan-y pinch-zoom;padding-bottom:12px}.app aside nav button{flex:0 0 auto;min-height:44px;white-space:nowrap}}

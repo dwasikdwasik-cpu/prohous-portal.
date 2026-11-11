@@ -44,3 +44,13 @@ test('unsupported thousands separators and Unicode negative amounts are never re
  assert.equal(parseInvoiceText(us).auto_book,false);
  assert.equal(parseInvoiceText(valid.replace('1 234,56','−1 234,56')).auto_book,false);
 });
+
+test('KSeF issue date ignores dates in delivery, payment terms, WZ and QR verification',()=>{
+ const text='Numer faktury\nFV/2026/44\nNumer KSeF\n1111111111-20261104-ABCDEF123456-AB\nData dostarczenia do KSeF\n2026-11-04 04:06\nSprzedawca\nNIP: 1234567890\nNabywca\nData wystawienia, z zastrzeżeniem art. 106na ust. 1 ustawy: 2026-11-04\nData dostawy: 2026-11-03\nKwota należności ogółem: 123,00 PLN\nPodsumowanie stawek podatku\n23% 100,00 23,00 123,00\nPłatność\nTermin płatności Opis terminu płatności\n2026-12-04 30 DAYS data wystawienia dokumentu\nDataWZ[#] 2026-11-03\nSprawdź fakturę w KSeF';
+ const r=parseInvoiceText(text);assert.equal(r.invoice_date,'2026-11-04');assert.equal(r.invoice_number,'FV/2026/44');assert.equal(r.gross_amount,123);assert.equal(r.auto_book,true);
+});
+test('isolated issue-date labels read a following date without borrowing delivery dates',()=>{
+ assert.equal(parseInvoiceText(valid.replace('06.11.2026','\n2026-11-06')).invoice_date,'2026-11-06');
+ assert.equal(parseInvoiceText(valid.replace('Data wystawienia: 06.11.2026','Data wystawienia\nData dostawy: 2026-11-06')).invoice_date,null);
+ assert.equal(parseInvoiceText(valid.replace('06.11.2026','6.11.2026')).invoice_date,'2026-11-06');
+});

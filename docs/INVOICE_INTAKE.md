@@ -23,3 +23,11 @@ Widoczność finansów dla klientów pozostaje zgodna z ustawieniami inwestycji;
 Zastosuj `supabase/migrations/20261111171546_invoice_intake.sql` po wcześniejszej konfiguracji ról pracownika. Dodaje kolejkę, prywatny bucket i wąskie procedury importu. Zwykły klient, wykonawca, konto oczekujące i ogólny pracownik nie mają dostępu.
 
 `npm test`, `npm run typecheck`, `npm run build`. Testy obejmują izolację uprawnień, brak dostępu do sald dla operatora, idempotencję, wyścig przypisania, niepoprawne kopie, zmianę skanu i błędy usuwania. Końcowy test na prawdziwym skanie wymaga pliku w folderze oraz nadanych kontu serwera uprawnień Edytora.
+
+## Kontrola jakości odczytu
+
+Najpierw czytane są wszystkie strony oryginalnego PDF, z kontrolą układu tekstu i współrzędnych. Data wystawienia jest rozpoznawana jako konkretne pole; wzmianki w terminie płatności nie tworzą drugiej daty. Numer KSeF nie zastępuje numeru faktury.
+
+Skany są przetwarzane w większej rozdzielczości, z ograniczeniem pamięci telefonu, prostowaniem i dodatkową kontrolą kontrastu. Dwa tryby rozpoznawania oraz położenie słów pomagają odtworzyć tabele VAT. Gorszy drugi odczyt nie usuwa poprawnie odczytanych wartości. Niepewne wartości pozostają propozycjami do sprawdzenia, a sprzeczne numery, daty i kwoty blokują automatyczne księgowanie. OCR ma ograniczony czas pracy i zwalnia pamięć po każdej stronie.
+
+Jeżeli po wcześniejszym błędzie faktura czeka w kolejce, wybierz **Odczytaj ponownie**. Odczyt nie gwarantuje rozpoznania każdego układu ani nieczytelnego zdjęcia; przy braku potwierdzenia kwot w podsumowaniu potrzebna jest weryfikacja ręczna.
