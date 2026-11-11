@@ -1,7 +1,7 @@
 'use client';
 import {useEffect,useRef,useState} from 'react';
 import {db} from '../lib/supabase';
-import {matchInvoiceClient} from '../lib/invoice-intake.mjs';
+import {matchInvoiceClient,currentScanQueue} from '../lib/invoice-intake.mjs';
 import DocumentPreview from './DocumentPreview';
 import InvoiceReviewForm from './InvoiceReviewForm';
 type Row=Record<string,any>;
@@ -12,7 +12,7 @@ export default function InvoiceIntakePanel({canBook,onImported}:{canBook:boolean
  const [draftReadings,setDraftReadings]=useState<Record<string,Row>>({});
  const active=useRef(true);useEffect(()=>{active.current=true;void reload().catch(e=>setMessage(e.message));return()=>{active.current=false}},[]);
  async function api(path:string,body?:unknown){const {data}=await db.auth.getSession();const r=await fetch(path,{method:body?'POST':'GET',headers:{Authorization:'Bearer '+(data.session?.access_token||''),...(body?{'Content-Type':'application/json'}:{})},...(body?{body:JSON.stringify(body)}:{}),cache:'no-store'});if(!r.ok){const d=await r.json();throw Error(d.error||'Nie udało się wykonać operacji.')}return r;}
- async function reload(){let page=0,more=true;const items:Row[]=[];let targets:Row[]=[];while(more){const data=await (await api('/api/invoice-intake?page='+page++)).json();items.push(...data.items);targets=data.targets;more=data.more}const unique=[...new Map(items.map(item=>[item.id,item])).values()];if(active.current){setItems(unique.filter(q=>!q.deleted_at));setTargets(targets)}return {items:unique,targets};}
+ async function reload(){let page=0,more=true;const items:Row[]=[];let targets:Row[]=[];while(more){const data=await (await api('/api/invoice-intake?page='+page++)).json();items.push(...data.items);targets=data.targets;more=data.more}const unique=currentScanQueue([...new Map(items.map(item=>[item.id,item])).values()]) as Row[];if(active.current){setItems(unique);setTargets(targets)}return {items:unique,targets};}
  async function run(fn:()=>Promise<void>){if(busy)return;setBusy(true);setMessage('');try{await fn()}catch(e){setMessage(e instanceof Error?e.message:'Nie udało się przetworzyć skanu.')}finally{if(active.current){await reload().catch(()=>{});setBusy(false)}}}
  async function review(q:Row,values:Row){const {data,error}=await db.rpc('invoice_intake_action',{p_id:q.id,p_action:'review',p_data:values});if(error)throw Error(error.message);return data;}
  async function scan(q:Row,choices:Row[]){
