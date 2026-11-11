@@ -21,6 +21,7 @@ export async function managementFixture(){
  await db.exec(fs.readFileSync('supabase/project-employee-access.sql','utf8'));
  await db.exec(fs.readFileSync('supabase/portal-permanent-removal.sql','utf8'));
  await db.exec(fs.readFileSync('supabase/migrations/20261111171546_invoice_intake.sql','utf8'));
+ await db.exec(fs.readFileSync('supabase/migrations/20261111175608_invoice_intake_removal.sql','utf8'));
  const ids=Array.from({length:8},(_,i)=>`00000000-0000-0000-0000-${String(i+1).padStart(12,'0')}`),sessions=ids.map((_,i)=>`10000000-0000-0000-0000-${String(i+1).padStart(12,'0')}`);
  const roles=['admin','manager','client','electrician','plumber','employee','employee','admin'];
  for(let i=0;i<ids.length;i++){

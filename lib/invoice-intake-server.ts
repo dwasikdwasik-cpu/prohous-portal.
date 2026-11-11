@@ -5,7 +5,7 @@ import {INVOICE_INBOX_FOLDER,INTAKE_BUCKET,SCAN_TYPES,MAX_SCAN_BYTES,validateSca
 import type {SupabaseClient} from '@supabase/supabase-js';
 export const sha256=(bytes:Uint8Array)=>createHash('sha256').update(bytes).digest('hex');
 export async function action(db:SupabaseClient,id:string|null,op:string,data:Record<string,unknown>={}){const r=await db.rpc('invoice_intake_action',{p_id:id,p_action:op,p_data:data});if(r.error)throw Error(r.error.message);return r.data;}
-export async function item(db:SupabaseClient,id:string){if(!/^[0-9a-f-]{36}$/.test(id))throw Error('404');const {data,error}=await db.from('invoice_intake').select('*').eq('id',id).single();if(error||!data)throw Error('404');return data;}
+export async function item(db:SupabaseClient,id:string){if(!/^[0-9a-f-]{36}$/.test(id))throw Error('404');const {data,error}=await db.from('invoice_intake').select('*').eq('id',id).single();if(error||!data||data.deleted_at)throw Error('404');return data;}
 export async function metadata(fileId:string){const r=await driveGet(`files/${encodeURIComponent(fileId)}?fields=id,name,mimeType,size,parents,version,trashed,capabilities(canTrash,canRemoveMyDriveParent)&supportsAllDrives=true`);return {...await r.json(),etag:r.headers.get('etag')};}
 async function limitedBytes(r:Response){if(!r.body)throw Error('Brak pliku');const reader=r.body.getReader();let size=0;const chunks:Uint8Array[]=[];try{while(true){const {done,value}=await reader.read();if(done)break;size+=value.byteLength;if(size>MAX_SCAN_BYTES)throw Error('Plik przekracza 25 MB');chunks.push(value)}}finally{await reader.cancel()}return new Uint8Array(Buffer.concat(chunks));}
 export async function stageScan(db:SupabaseClient,q:any){
