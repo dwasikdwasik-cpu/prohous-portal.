@@ -102,7 +102,12 @@ export default function Home(){
    // AFTER triggers finish before this separate read; UPDATE RETURNING may contain the old status.
    const {data:fresh,error:readError}=await db.from('documents').select('*').eq('id',d.id).single();
    if(readError)throw readError;
-   await refresh();setMessage(accountingMessage(fresh)||'Zapisano dane dokumentu.');
+   let learningNote='';
+   if(fresh.source_intake_id&&category==='faktury'){
+    try{await api('/api/invoice-intake/'+fresh.source_intake_id+'/learning',{operation:'confirm'});learningNote=' Zapamiętano ręczne poprawki odczytu.'}
+    catch{learningNote=' Dane zapisano, ale nie udało się zapamiętać poprawek odczytu.'}
+   }
+   await refresh();setMessage((accountingMessage(fresh)||'Zapisano dane dokumentu.')+learningNote);
   });
  }
  async function uploadFiles(e:React.FormEvent<HTMLFormElement>){
