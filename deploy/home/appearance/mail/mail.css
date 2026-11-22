@@ -1,0 +1,102 @@
+/* ProHouse mail. Preserve the existing mail layout, dialogs and print views. */
+@media screen {
+  :root {
+    --navy: #1d2b34; --navy2: #30404a; --gold: #82682b;
+    --accent: #f4c72c; --accent-soft: #fbf5dc; --paper: #faf9f5;
+    --ink: #192631; --muted: #55605d; --line: #dbdcd4;
+    --surface: #fff; --radius: 5px; --panel-shadow: none;
+    --ph-warm: #f1eee5;
+  }
+  body { background: var(--paper); color: var(--ink); font-family: "DM Sans", Arial, Helvetica, sans-serif; }
+  :is(#login,#app,dialog) :is(h1,h2,h3) { letter-spacing: -.045em; }
+  :is(#login,#app,dialog) :is(input,select,textarea) { border-radius: 4px; border-color: #c9cdc3; }
+  :is(#login,#app,dialog) :is(button,a,input,textarea,select,summary):focus-visible { outline: 3px solid #876920; outline-offset: 2px; }
+  :is(#login,#app,dialog) :is(.primary,.gold), #resume-compose.primary {
+    color: var(--ink); background: var(--accent); border: 1px solid #deaf17; border-radius: 4px; font-weight: 700;
+  }
+  :is(#login,#app,dialog) :is(.primary,.gold):hover:not(:disabled), #compose:hover, #resume-compose:hover { color: var(--ink); background: #e9bc22; }
+  :is(#app,dialog) :is(.secondary,.icon,.close,.compose-attach) { color: var(--ink); background: white; border: 1px solid #c9cdc3; border-radius: 4px; }
+  :is(#login,#app,dialog) .eyebrow { color: var(--gold); font-weight: 700; letter-spacing: .13em; }
+  :is(#login,#app,dialog) :is(a,.text-button) { color: #715922; text-underline-offset: 3px; }
+  #app .message-body a { color: #715922; }
+
+  #login.login-layout {
+    min-height: 100dvh; max-width: 1300px; margin: auto;
+    padding: clamp(20px,4vw,64px); gap: clamp(20px,3vw,48px); align-content: center; align-items: center;
+    grid-template-columns: minmax(0,1.16fr) minmax(340px,.84fr);
+  }
+  #login .brand-story {
+    display: flex; justify-content: flex-start; gap: 18px; min-height: 0; padding: clamp(23px,3vw,45px);
+    color: var(--ink); background: var(--ph-warm); border: 1px solid var(--line); border-radius: 5px;
+  }
+  #login .brand-story::after {
+    content: ""; display: block; position: static; width: auto; height: clamp(145px,15vw,215px); flex: none;
+    margin: 0 calc(-1 * clamp(23px,3vw,45px)) calc(-1 * clamp(23px,3vw,45px));
+    background: #ded5c5 url("./wnetrze.webp") center 56% / cover no-repeat; border: none; transform: none;
+  }
+  #login .brand-graphic { display: none; }
+  #login .brand-story .company-brand { position: static; margin: 0; width: fit-content; }
+  #login .brand-story .company-brand small { color: var(--muted); font-size: 10px; letter-spacing: .13em; }
+  #login .company-logo { display: block; width: 128px; height: 50px; max-width: 100%; object-fit: contain; object-position: left center; background: transparent; padding: 0; filter: none; }
+  #login .brand-story h1 { font-size: clamp(32px,3.8vw,58px); font-weight: 650; letter-spacing: -.06em; line-height: 1.06; margin: 12px 0; }
+  #login .brand-story h1 span { color: var(--gold); }
+  #login .brand-story p:not(.eyebrow) { color: #4c5955; line-height: 1.55; margin: 0; font-size: 15px; letter-spacing: 0; }
+  #login .brand-story footer { color: #57605a; line-height: 1.5; flex-wrap: wrap; gap: 6px 20px; }
+  #login .eyebrow::before { content: ""; display: inline-block; width: 23px; height: 2px; background: #9f803a; vertical-align: middle; margin-right: 9px; }
+  #login .login-box { width: 100%; max-width: none; padding: clamp(23px,3vw,40px); background: white; border: 1px solid var(--line); border-radius: 5px; }
+  #login .login-box .mini-logo { margin: 0 0 20px; }
+  #login .login-box .eyebrow { margin: 0 0 9px; }
+  #login .login-box h2 { font-size: clamp(27px,2.6vw,40px); line-height: 1.12; margin: 0 0 9px; }
+  #login .login-box form { margin: 20px 0 16px; }
+  #login .login-box .primary { min-height: 46px; width: 100%; }
+  #login .login-box input { min-height: 44px; }
+  #login .login-box :is(.small,.login-help p) { color: var(--muted); line-height: 1.5; }
+  #login .login-box > p:last-child { margin: 12px 0 0; }
+
+  #app .sidebar { color: var(--ink); background: #fff; border-right: 1px solid var(--line); }
+  #app .sidebar .company-logo { background: transparent; object-fit: contain; filter: none; }
+  #app .sidebar .company-brand small, #app .side-bottom strong { color: var(--ink); }
+  #app .sidebar nav { scrollbar-color: #aaa48f #f2f0e8; }
+  #app .sidebar nav button { border-radius: 4px; color: #485450; }
+  #app .sidebar :is(.nav-icon,.nav-label) { color: #795f25; }
+  #app .sidebar nav button:hover, #app .portal-links a:hover { color: var(--ink); background: var(--ph-warm); }
+  #app .sidebar nav button.active { color: var(--ink); background: var(--accent-soft); box-shadow: inset 3px 0 var(--accent); }
+  #app .sidebar :is(hr,.side-bottom,.portal-links) { border-color: var(--line); }
+  #app .sidebar :is(.portal-links a,.side-bottom small,.side-bottom button) { color: #505c56; }
+  #app .install-app, #app .side-bottom .avatar { color: #665020; background: var(--ph-warm); border-color: var(--line); border-radius: 4px; }
+  #app > main { background: var(--paper); }
+  #app > main > header { border-bottom: 1px solid var(--line); padding-bottom: 12px; }
+  #app .status { border-radius: 4px; }
+  #app :is(.toolbar,.bulk-bar,.message-list,.reader,.settings-card,.signature-card,.person-card,.table-wrap,.drive-card,.search,.quick-notes) {
+    border-radius: 5px; border-color: var(--line); box-shadow: none;
+  }
+  #app .toolbar .search { background: var(--paper); border-color: #c9cdc3; }
+  #app .search input { background: transparent; }
+  #app :is(.mail-layout .list-heading,.filter-panel[open],.recipient-options,.audit-table th) { background: #f5f3eb; }
+  #app .mail-layout #messages { scrollbar-color: #b2ad99 #f4f2e9; }
+  #app .mail-layout .message-row { border-radius: 3px; }
+  #app .mail-layout .message-row:hover { background: #f5f3ec; }
+  #app .mail-layout .message-row.unread { background: #f9f6e9; box-shadow: inset 3px 0 #a78941; }
+  #app .mail-layout .message-row.selected { background: #f7edc6; box-shadow: inset 3px 0 #816625; }
+  #app .mail-layout .flag-button.flagged { color: #795d1e; }
+  #app .reader :is(.empty-symbol,.attachments a) { color: #705622; background: #f5eed8; border-radius: 4px; }
+  dialog { color: var(--ink); border-radius: 6px; }
+  dialog::backdrop { background-color: #152029a8; }
+  .compose-dialog :is(.dialog-heading,.compose-footer,.recipient-options) { background: var(--ph-warm); }
+  @media (max-width:760px) {
+    #login.login-layout { display: flex; flex-direction: column; align-items: stretch; min-height: 0; gap: 14px; padding: 15px; max-width: 560px; }
+    #login .login-box { order: -1; padding: 22px; }
+    #login .login-box .mini-logo { margin-bottom: 12px; }
+    #login .login-box input { font-size: 16px; }
+    #login .brand-story { padding: 20px; gap: 12px; }
+    #login .brand-story::after { height: 120px; margin: 0 -20px -20px; }
+    #login .brand-story h1 { font-size: 31px; }
+    #login .brand-story .company-brand, #login .brand-story footer { display: none; }
+    #app .sidebar { border: 0; border-bottom: 1px solid var(--line); }
+    #app .sidebar nav button.active { box-shadow: inset 0 -3px var(--accent); }
+    #app .sidebar nav button, #app #compose { min-height: 42px; }
+    #app .header-right { grid-template-columns: auto auto minmax(0,1fr) 34px 34px; }
+    #app #connection { overflow-wrap: anywhere; }
+    #app .toolbar :is(input,select), .compose-dialog :is(input:not([type=file]),select,textarea) { font-size: 16px; }
+  }
+}
