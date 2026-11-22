@@ -1,0 +1,121 @@
+/* ProHouse material orders. Keep the application and its print layout independent. */
+@media screen {
+  :root {
+    --ph-ink: #192631;
+    --ph-paper: #faf9f5;
+    --ph-warm: #f1eee5;
+    --ph-line: #dbdcd4;
+    --ph-muted: #55605d;
+    --ph-gold: #795e26;
+    --ph-yellow: #f4c72c;
+    background: var(--ph-paper);
+    color: var(--ph-ink);
+  }
+  body, #app { background: var(--ph-paper); color: var(--ph-ink); }
+  #app { font-family: "DM Sans", Arial, Helvetica, sans-serif; }
+  #app :is(h1,h2,h3) { letter-spacing: -.035em; line-height: 1.16; }
+  #app :is(small,.muted,.footnote,.meta,.history,.empty,.login-summary,.audit-agent,.titleline p,.invrow p) { color: var(--ph-muted); }
+  #app :is(.eyebrow,.orderno) { color: var(--ph-gold); font-weight: 700; letter-spacing: .13em; }
+  #app .eyebrow::before { content: ""; display: inline-block; vertical-align: middle; margin-right: 9px; width: 24px; height: 2px; background: #9f803a; }
+  #app a, #app .history summary { color: #705622; text-underline-offset: 3px; }
+  #app :is(button,input,textarea,select) { border-radius: 4px; }
+  #app :is(input,textarea,select) { min-width: 0; border-color: #c6cac2; color: var(--ph-ink); background-color: #fff; }
+  #app input[type=checkbox] { accent-color: #795e26; }
+  #app button { background-color: #1d2b34; color: white; line-height: 1.3; }
+  #app button:hover:not(:disabled) { filter: brightness(.94); }
+  #app :is(.outline,.secondary) { color: var(--ph-ink); background-color: #fff; border: 1px solid #c9cdc3; }
+  #app .danger { color: #8c302c; background: #fceeea; border: 1px solid #e9c6bc; }
+  #app :is(.submit,#neworder,button[type=submit],button[data-action=accept],button[data-action=dispatch],button[data-action=complete]) {
+    color: var(--ph-ink); background: var(--ph-yellow); border: 1px solid #deaf17; font-weight: 700;
+  }
+  #app :is(a,button,input,select,textarea,summary):focus-visible { outline: 3px solid #876920; outline-offset: 3px; }
+
+  #app .login {
+    position: relative; max-width: 1120px; width: calc(100% - 64px); margin: clamp(24px,4vw,56px) auto;
+    padding: clamp(28px,3vw,46px); border: 1px solid var(--ph-line); border-radius: 5px; background: #fff; box-shadow: none;
+  }
+  #app .login::after {
+    content: ""; position: absolute; inset: 0 0 0 52%; border-radius: 0 4px 4px 0;
+    background: #e5dfd2 url("./wnetrze.webp") 51% center / cover no-repeat;
+  }
+  #app .login > :not(img) { width: 47%; }
+  #app .login > img { width: 153px; max-height: 65px; object-fit: contain; object-position: left; margin: 0 0 22px; }
+  #app .login h1 { margin: 9px 0; font-size: clamp(32px,3.3vw,49px); line-height: 1.04; letter-spacing: -.055em; }
+  #app .login p { color: var(--ph-muted); margin: 10px 0; line-height: 1.5; }
+  #app .login .tabs { gap: 4px; padding: 4px; margin: 18px 0 14px; border: 1px solid var(--ph-line); border-radius: 5px; background: var(--ph-warm); }
+  #app .tabs button { min-height: 44px; padding: 8px; font-size: 13px; }
+  #app .tabs .secondary { color: #4e5753; border-color: transparent; background: transparent; }
+  #app .login label { margin: 12px 0 6px; }
+  #app .login .submit { min-height: 46px; margin: 12px 0 4px; }
+  #app .login .footnote { margin-top: 16px; font-size: 11px; }
+
+  #app .shell { grid-template-columns: clamp(206px,18.5vw,260px) minmax(0,1fr); background: var(--ph-paper); }
+  #app .sidebar { background: #fff; border-right: 1px solid var(--ph-line); color: var(--ph-ink); scrollbar-color: #b4ae9b #f3f1e9; }
+  #app .sidebar .brand { border-radius: 0; padding-bottom: 20px; border-bottom: 1px solid var(--ph-line); }
+  #app .sidebar .sub { color: var(--ph-gold); font-weight: 700; }
+  #app .nav button { color: #475450; background: transparent; }
+  #app .nav button:hover { background: var(--ph-warm); }
+  #app .nav button.active { color: var(--ph-ink); background: #fbf6de; box-shadow: inset 3px 0 var(--ph-yellow); }
+  #app .sidebar .bottom { color: var(--ph-muted); }
+  #app .sidebar .bottom strong { color: var(--ph-ink); }
+  #app .logout { color: var(--ph-ink); background: var(--ph-warm); }
+  #app .main { min-width: 0; padding-bottom: 68px; }
+  #app .top { color: var(--ph-muted); border-color: var(--ph-line); }
+  #app .top strong, #app .empty strong { color: var(--ph-ink); }
+  #app .titleline h1 { font-size: clamp(28px,3vw,44px); letter-spacing: -.05em; margin-bottom: 8px; }
+  #app :is(.panel,.stat,.order) { min-width: 0; background: #fff; border: 1px solid var(--ph-line); border-radius: 5px; }
+  #app .stat span, #app .stat small { color: var(--ph-muted); }
+  #app .stat strong { font-variant-numeric: tabular-nums; }
+  #app .stat:first-child { background: #1d2b34; border-color: #1d2b34; color: #fff; }
+  #app .stat:first-child span { color: #f0d47e; }
+  #app .stat:first-child small { color: #d9dfdb; }
+  #app .banner, #app .priority { border: 1px solid #dacda4; border-radius: 5px; color: #50482f; background: #f7f3e5; }
+  #app .banner.orange, #app .priority { border-color: #e2c99a; background: #fbf1dc; color: #694e1d; }
+  #app .preview-banner { border-left: 3px solid #967c3e; }
+  #app .order.priority-order { border-left: 3px solid #a67826; }
+  #app :is(.fieldhead,.item span:last-child) { color: var(--ph-muted); }
+  #app .fieldrow button { color: #603b32; background: #f3efea; }
+  #app :is(.items,.history div,.invrow,.audit-table td,.audit-table th) { border-color: var(--ph-line); }
+  #app .audit-table th { color: #44504a; background: var(--ph-warm); }
+  #app .badge { color: #28583a; background: #e9f3e8; border-radius: 4px; }
+  #app .badge.blue { color: #344f62; background: #e9f0f2; }
+  #app .badge.amber { color: #70521a; background: #f9edcb; }
+  #app .badge.red { color: #8b3931; background: #fae8e3; }
+  body #prohouse-language-bar { color: var(--ph-ink); border-color: var(--ph-line); box-shadow: none; }
+  body #prohouse-language-bar label { color: var(--ph-muted); }
+  body #prohouse-language-bar select { color: var(--ph-ink); background: var(--ph-paper); border-color: #c9cdc3; border-radius: 4px; }
+  body #ph-install-button { color: white; background: #23313a; border-radius: 5px; box-shadow: none; }
+  body #ph-install-dialog { color: var(--ph-ink); border: 1px solid var(--ph-line); border-radius: 5px; }
+  body #ph-install-dialog button.ph-install-primary { color: var(--ph-ink); background: var(--ph-yellow); }
+  body #toast { color: white; background: #28473c; border-radius: 5px; bottom: 76px; }
+  @media (min-width:681px) {
+    body.prohouse-has-language #app .sidebar { top: 44px; height: calc(100dvh - 44px); }
+  }
+  @media (max-width:760px) {
+    #app .login { width: calc(100% - 28px); max-width: 540px; margin: 16px auto; padding: 22px; }
+    #app .login > :not(img) { width: 100%; }
+    #app .login > img { width: 128px; max-height: 48px; margin-bottom: 14px; }
+    #app .login h1 { font-size: 32px; }
+    #app .login::after { position: static; display: block; height: 120px; margin: 16px -22px -22px; border-radius: 0 0 4px 4px; background-position: center 56%; }
+  }
+  @media (max-width:680px) {
+    #app .shell { min-height: auto; }
+    #app .sidebar { padding: 10px 14px 8px; border: 0; border-bottom: 1px solid var(--ph-line); }
+    #app .sidebar .brand { padding: 0; width: fit-content; border: 0; }
+    #app .sidebar .brand img { width: 103px; }
+    #app .nav { margin-top: 6px; padding: 2px 0 4px; }
+    #app .nav button { min-height: 44px; }
+    #app .nav button.active { box-shadow: inset 0 -3px var(--ph-yellow); }
+    #app .main { padding: 0 14px 22px; }
+    #app .top { padding: 10px 0; margin-bottom: 16px; }
+    #app .titleline { flex-wrap: wrap; gap: 10px; margin-bottom: 16px; }
+    #app .titleline h1 { font-size: 28px; }
+    #app .banner { padding: 12px 14px; }
+    #app :is(.panel,.order) { padding: 15px; }
+    #app .toolbar > :is(input,select) { max-width: 100%; min-width: 0; }
+    #app :is(.login,.panel) :is(input:not([type=checkbox]),textarea,select) { font-size: 16px; }
+    #app .fieldrow { grid-template-columns: minmax(0,1.6fr) minmax(0,.8fr) minmax(0,.8fr) 36px; }
+    body #ph-install-button:not([hidden]) { position: static; display: block; margin: 12px auto max(16px,env(safe-area-inset-bottom)); }
+    body #toast { bottom: 16px; }
+  }
+}
