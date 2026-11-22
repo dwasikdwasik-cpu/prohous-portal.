@@ -19,6 +19,8 @@ body .app{min-height:100dvh;display:block;background:var(--paper)}
 .app .content{width:100%;max-width:1516px;margin-inline:auto;padding:22px clamp(16px,4.5vw,82px) 40px;min-width:0}
 .app .content:has(>.summary-banner){display:flex;flex-direction:column}
 .app .content:has(>.summary-banner)>.two-col{order:1}.app .content:has(>.summary-banner)>.stats{order:2}.app .content:has(>.summary-banner)>footer{order:3}
+.app .content:has(>.two-col .account-row)>.stats{order:0}
+.app .content:has(>.two-col .account-row)>.summary-banner{order:1}
 .app .page-title{margin:0 0 18px;gap:20px;flex-wrap:wrap}
 .app .page-title h1{font-size:clamp(28px,4vw,52px);letter-spacing:-.06em;line-height:1.08}
 .app .content:has(>.summary-banner)>.page-title h1,.app .content:has(>.summary-banner)>.page-title .muted{display:none}
