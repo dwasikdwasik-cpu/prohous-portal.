@@ -63,7 +63,15 @@ def patch_config(original, host, asset_dir):
     replacement += f"sub_filter_once on;\nsub_filter '</head>' '{tags}</head>';\nproxy_pass {match.group(1)};\n}}\n"
     return original[:match.start()] + replacement + original[match.end():]
 
-def revalidate_document(configuration):
+def stylesheet_url(asset_dir):
+    revision = hashlib.sha256((asset_dir / "theme.css").read_bytes()).hexdigest()[:16]
+    return f"{PREFIX}theme.css?v={revision}"
+
+def revalidate_document(configuration, asset_dir):
+    href = r'href="' + re.escape(PREFIX) + r'theme\.css(?:\?v=[0-9a-f]+)?"'
+    configuration, count = re.subn(href, f'href="{stylesheet_url(asset_dir)}"', configuration)
+    if count == 0:
+        raise ValueError("Missing portal stylesheet.")
     # HTML needs a fresh response even when a visitor presents the old app ETag.
     marker = "# prohouse-document-revalidation"
     if marker in configuration:
@@ -107,7 +115,7 @@ def check_live(host, asset_dir):
     for _ in range(10):
         try:
             html=fetch("/").decode()
-            if html.count(PREFIX+"theme.css") != 1 or html.count(PREFIX+"theme.js") != 1:
+            if html.count(stylesheet_url(asset_dir)) != 1 or html.count(PREFIX+"theme.js") != 1:
                 raise ValueError("Theme markers missing")
             for name in ASSETS:
                 if hashlib.sha256(fetch(PREFIX+name)).digest() != hashlib.sha256((asset_dir/name).read_bytes()).digest():
@@ -131,14 +139,14 @@ def main():
         old=config.read_bytes()
         dest=Path("/var/www/prohouse-wyglad")/RELEASE
         if MARK in old.decode():
-            updated=revalidate_document(old.decode()).encode()
+            updated=revalidate_document(old.decode(),dest).encode()
             if updated!=old:
                 activate_configuration(config,old,updated,opts.hostname,dest)
             else:
                 check_live(opts.hostname,dest)
                 print("VERIFIED", RELEASE)
             return
-        new=revalidate_document(patch_config(old.decode(),opts.hostname,dest)).encode()
+        new=revalidate_document(patch_config(old.decode(),opts.hostname,dest),src).encode()
         subprocess.run(["nginx","-t"],check=True)
         dest.parent.mkdir(mode=0o755,parents=True,exist_ok=True)
         with tempfile.TemporaryDirectory(dir=dest.parent) as tmp:
