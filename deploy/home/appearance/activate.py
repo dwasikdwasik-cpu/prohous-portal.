@@ -63,6 +63,44 @@ def patch_config(original, host, asset_dir):
     replacement += f"sub_filter_once on;\nsub_filter '</head>' '{tags}</head>';\nproxy_pass {match.group(1)};\n}}\n"
     return original[:match.start()] + replacement + original[match.end():]
 
+def revalidate_document(configuration):
+    # HTML needs a fresh response even when a visitor presents the old app ETag.
+    marker = "# prohouse-document-revalidation"
+    if marker in configuration:
+        return configuration
+    pos = configuration.index("# " + MARK)
+    match = re.search(r"location / \{([^{}]*)\}", configuration[pos:])
+    if not match or "sub_filter_once on;" not in match.group(1):
+        raise ValueError("Expected branded portal proxy location.")
+    location = match.group(1)
+    policy = ('\nproxy_set_header If-None-Match "";\nproxy_set_header If-Modified-Since "";'
+              '\nproxy_hide_header ETag;\nproxy_hide_header Last-Modified;'
+              '\nproxy_hide_header Cache-Control;\nif_modified_since off;\nexpires -1;\n')
+    next_location = marker + "\nlocation = / {" + policy + location + "}\n"
+    offset = pos + match.start()
+    return configuration[:offset] + next_location + configuration[offset:]
+
+def activate_configuration(config, original, updated, host, dest):
+    backups=Path("/var/backups/prohouse-appearance")
+    backups.mkdir(mode=0o700,parents=True,exist_ok=True)
+    stamp=datetime.datetime.now(datetime.timezone.utc).strftime("%Y%m%dT%H%M%S%fZ")
+    backup=backups/(config.name+"-"+stamp)
+    shutil.copy2(config,backup)
+    if config.read_bytes()!=original:
+        raise RuntimeError("Configuration changed during installation.")
+    atomic_replace(config,updated)
+    try:
+        subprocess.run(["nginx","-t"],check=True)
+        subprocess.run(["systemctl","reload","nginx"],check=True)
+        check_live(host,dest)
+    except BaseException:
+        if config.read_bytes()==updated:
+            atomic_replace(config,original)
+            subprocess.run(["nginx","-t"],check=True)
+            subprocess.run(["systemctl","reload","nginx"],check=True)
+        raise
+    print("VERIFIED",RELEASE,"BACKUP",backup)
+
 def check_live(host, asset_dir):
     def fetch(path):
         return subprocess.check_output(["curl","--noproxy","*","--resolve",f"{host}:443:127.0.0.1","--max-time","8","-fsS","https://"+host+path],stderr=subprocess.DEVNULL)
@@ -93,10 +131,14 @@ def main():
         old=config.read_bytes()
         dest=Path("/var/www/prohouse-wyglad")/RELEASE
         if MARK in old.decode():
-            check_live(opts.hostname,dest)
-            print("VERIFIED", RELEASE)
+            updated=revalidate_document(old.decode()).encode()
+            if updated!=old:
+                activate_configuration(config,old,updated,opts.hostname,dest)
+            else:
+                check_live(opts.hostname,dest)
+                print("VERIFIED", RELEASE)
             return
-        new=patch_config(old.decode(),opts.hostname,dest).encode()
+        new=revalidate_document(patch_config(old.decode(),opts.hostname,dest)).encode()
         subprocess.run(["nginx","-t"],check=True)
         dest.parent.mkdir(mode=0o755,parents=True,exist_ok=True)
         with tempfile.TemporaryDirectory(dir=dest.parent) as tmp:
@@ -118,25 +160,7 @@ def main():
             else:
                 stage.chmod(0o755)
                 os.rename(stage,dest)
-        backups=Path("/var/backups/prohouse-appearance")
-        backups.mkdir(mode=0o700,parents=True,exist_ok=True)
-        stamp=datetime.datetime.now(datetime.timezone.utc).strftime("%Y%m%dT%H%M%S%fZ")
-        backup=backups/(config.name+"-"+stamp)
-        shutil.copy2(config,backup)
-        if config.read_bytes()!=old:
-            raise RuntimeError("Configuration changed during installation.")
-        atomic_replace(config,new)
-        try:
-            subprocess.run(["nginx","-t"],check=True)
-            subprocess.run(["systemctl","reload","nginx"],check=True)
-            check_live(opts.hostname,dest)
-        except BaseException:
-            if config.read_bytes()==new:
-                atomic_replace(config,old)
-                subprocess.run(["nginx","-t"],check=True)
-                subprocess.run(["systemctl","reload","nginx"],check=True)
-            raise
-        print("VERIFIED",RELEASE,"BACKUP",backup)
+        activate_configuration(config,old,new,opts.hostname,dest)
 
 if __name__=="__main__":
     main()
