@@ -1,0 +1,97 @@
+/* ProHouse employee portal. Scope the screen theme to keep existing PDF and print styles. */
+@media screen {
+:root{--ph-ink:#192631;--ph-paper:#faf9f5;--ph-warm:#f1eee5;--ph-line:#dbdcd4;--ph-gold:#82672e;--ph-yellow:#f4c72c;--ph-muted:#55605d}
+html,body{background:var(--ph-paper);color:var(--ph-ink)}
+#root{font-family:"DM Sans",Arial,Helvetica,sans-serif}
+#root :is(h1,h2,h3){font-family:Manrope,"DM Sans",Arial,sans-serif;letter-spacing:-.04em;color:var(--ph-ink)}
+#root .eyebrow,#root .navlabel{color:var(--ph-gold);font-weight:700;letter-spacing:.12em}
+#root .mobilebar{background:#1d2b34;color:#fff}
+#root .mobilebar small{color:#d5d9d7}
+#root .mobilebaricon{background:#364348;color:#f3d579;border-radius:4px}
+#root .mobilebar>button{background:#faf9f5;color:var(--ph-ink);border-radius:4px}
+#root .muted,#root .subtitle,#root small{color:var(--ph-muted)}
+#root :is(button,a,input,select,textarea,summary):focus-visible{outline:3px solid #896b25;outline-offset:3px}
+#root :is(input:not([type=checkbox]):not([type=radio]):not([type=file]),select,textarea){border-color:#c9cdc3;border-radius:4px;color:var(--ph-ink);background-color:white}
+#root input[type=checkbox],#root input[type=radio]{accent-color:#735b25}
+#root .primary{background:var(--ph-yellow);border-color:#dfb421;color:var(--ph-ink);border-radius:4px;font-weight:700}
+#root .primary:hover:not(:disabled){background:#eac02a}
+#root .secondary{background:white;color:var(--ph-ink);border-color:#cdd0c7;border-radius:4px;font-weight:600}
+#root .secondary:hover:not(:disabled){background:var(--ph-warm)}
+#root .secondary.reject,#root .danger{color:#8b302c;border-color:#d5a9a5}
+#root .secondary.accept{color:#285a3c;border-color:#accab4}
+#root .textbutton,#root .maplink{color:#705622;font-weight:650}
+#root .panel,#root .stat{border:1px solid var(--ph-line);border-radius:5px;background:#fff;box-shadow:none}
+#root .loginpage{padding:0 clamp(16px,4.5vw,80px) max(28px,env(safe-area-inset-bottom));background:var(--ph-paper)}
+#root .loginbrand{max-width:1360px;margin:auto;padding:15px 0;border-bottom:1px solid var(--ph-line)}
+#root .loginbrand .companyLogo{height:49px;width:auto;max-width:150px;object-fit:contain}
+#root .loginlayout{max-width:1260px;margin:clamp(24px,4vw,60px) auto;display:grid;grid-template-columns:minmax(0,1.32fr) minmax(300px,.78fr);gap:clamp(24px,4vw,64px);align-items:center}
+#root .loginintro{min-width:0;position:relative;isolation:isolate;overflow:hidden;border:1px solid var(--ph-line);border-radius:5px;background:var(--ph-warm);padding:clamp(24px,3vw,45px)}
+#root .loginintro::after{content:"";display:block;margin:24px calc(-1 * clamp(24px,3vw,45px)) calc(-1 * clamp(24px,3vw,45px));height:clamp(135px,15vw,220px);background:#d2c6af url("./praca-wnetrze.webp") center 56%/cover no-repeat}
+#root .loginintro .eyebrow::before,#root .heading .eyebrow::before{content:"";display:inline-block;width:24px;height:2px;margin-right:9px;vertical-align:middle;background:#9f803a}
+#root .loginintro h1{font-size:clamp(34px,4.6vw,69px);line-height:1.04;font-weight:650;letter-spacing:-.065em;margin:15px 0}
+#root .loginintro h1 span{color:#9f803a}
+#root .loginintro>p,#root .loginfeature{color:#4c5955}
+#root .loginintro>p{line-height:1.5;max-width:48ch;margin:0 0 15px}
+#root .loginfeature{gap:9px;font-size:14px;margin:9px 0}
+#root .loginfeature svg{color:var(--ph-gold);width:18px}
+#root .loginintro .loginnote{color:#59635f;margin:15px 0 0}
+#root .loginform{background:white;padding:clamp(22px,3vw,42px);border:1px solid var(--ph-line);border-radius:5px;box-shadow:none;width:100%;min-width:0}
+#root .loginform h2,#root .setupPassword h1{font-size:clamp(25px,2.35vw,38px);line-height:1.15}
+#root .loginform>.muted,#root .loginform label{font-size:14px}
+#root .loginform .primary{font-size:15px;min-height:46px}
+#root .loginform .loginmode{color:#645026;border-color:var(--ph-line);font-size:14px}
+#root .loginform.setupPassword{max-width:490px;margin:32px auto}
+#root .dialogicon,#root .workspaceIcon,#root .emptyicon{color:var(--ph-gold);background:#f5eed8;border-radius:4px}
+#root .shell{background:var(--ph-paper)}
+#root .shell .sidebar{background:white;border-color:var(--ph-line);scrollbar-color:#aaa38e #f2f0e8}
+#root .sidebar .workspace{background:var(--ph-warm);border-color:var(--ph-line);color:var(--ph-ink);border-radius:4px}
+#root .sidebar .nav{border-radius:3px;color:#485450;font-size:14px}
+#root .sidebar .nav:hover{background:#f4f2e9}
+#root .sidebar .nav.active{background:#fbf6de;color:var(--ph-ink);box-shadow:inset 3px 0 var(--ph-yellow);font-weight:700}
+#root .sidebar .nav.active svg{color:#755b20}
+#root .sidebar .sidebottom,#root .shell header,#root .shell footer{border-color:var(--ph-line);color:var(--ph-muted)}
+#root .shell header{background:white}
+#root .shell main{background:var(--ph-paper)}
+#root .shell .heading h1{font-size:clamp(29px,3vw,45px);line-height:1.1;letter-spacing:-.055em}
+#root .shell .panelhead{border-color:var(--ph-line)}
+#root .shell .panelhead h2{font-size:clamp(18px,1.55vw,24px)}
+#root .shell .stat{min-width:0}
+#root .shell .statlabel{color:var(--ph-muted)}
+#root .shell .stat strong{color:var(--ph-ink)}
+#root .shell .banner{background:#1d2b34;border-color:#1d2b34;border-radius:5px;color:white}
+#root .shell .banner::before,#root .shell .banner::after{display:none}
+#root .shell .banner h2{color:white}
+#root .shell .banner p{color:#dee3df}
+#root .shell .banner .eyebrow{color:#f0d47e}
+#root .shell .bannerIcon{color:#f4d778;background:#38464b}
+#root .workerRegistration{background:var(--ph-warm);color:var(--ph-ink);border:1px solid var(--ph-line);border-radius:5px}
+#root .workerClock{color:#795f25;font-variant-numeric:tabular-nums}
+#root .workerRegistration .workerMainButton{background:var(--ph-yellow);color:var(--ph-ink);border:1px solid #dfb421;border-radius:4px;box-shadow:none}
+#root .workerMainButton small{color:#4d481f}
+#root .workerRegistration .workerEndButton{border-radius:4px;border-color:#c4c8bd;background:white}
+#root .workerRegistration .gpsnotice,#root .infobox{background:#f7f5ed;border-color:var(--ph-line);color:#4b5651;border-radius:4px}
+#root .workerStartHint,#root .lastGps{color:var(--ph-muted)}
+#root .workerShortcuts button,#root .workerPayCard,#root .phLeaveStats>div{border:1px solid var(--ph-line);border-radius:4px;background:white;color:var(--ph-ink)}
+#root .shell :is(.panel,.tablewrap,.phLeaveTable) th{background:#f3f1e9;color:#505b56}
+#root .dialog{background:var(--ph-paper);color:var(--ph-ink);border-radius:6px}
+#root .overlay{background-color:#152029a8}
+#root .pill.green{color:#28583a;background:#e9f3e8}
+#root .pill.amber{color:#75581c;background:#faf0d0}
+#root .pill.blue{color:#344f62;background:#e9f0f2}
+@media(max-width:760px){
+ #root .loginpage{padding-inline:16px}
+ #root .loginbrand{padding-block:10px}
+ #root .loginbrand .companyLogo{height:38px}
+ #root .loginlayout{display:flex;flex-direction:column;gap:14px;margin:16px auto;max-width:560px}
+ #root .loginform{order:-1;max-width:none}
+ #root .loginintro{width:100%;padding:18px}
+ #root .loginintro::after{height:130px;margin:14px -18px -18px}
+ #root .loginintro h1{font-size:30px;margin:10px 0}
+ #root .loginintro>p{font-size:14px;margin-bottom:0}
+ #root .loginform h2{margin-top:12px}
+ #root .shell .sidebar nav .nav{font-size:13px;white-space:normal}
+ #root .workerRegistration .workerMainButton{font-size:20px}
+ #root .workerShell .heading h1{font-size:28px}
+ #root .workerClock{font-size:23px}
+}
+}
