@@ -3,6 +3,7 @@ const target=new URL('../public/ocr/',import.meta.url);
 await mkdir(new URL('core/',target),{recursive:true});await mkdir(new URL('lang/',target),{recursive:true});
 await copyFile(new URL('../node_modules/tesseract.js/dist/worker.min.js',import.meta.url),new URL('worker.min.js',target));
 await copyFile(new URL('../node_modules/pdfjs-dist/build/pdf.worker.min.mjs',import.meta.url),new URL('pdf.worker.min.mjs',target));
+await copyFile(new URL('../node_modules/pdfjs-dist/legacy/build/pdf.worker.min.mjs',import.meta.url),new URL('pdf.preview.worker.min.mjs',target));
 await copyFile(new URL('../node_modules/@tesseract.js-data/pol/4.0.0/pol.traineddata.gz',import.meta.url),new URL('lang/pol.traineddata.gz',target));
 const core=new URL('../node_modules/tesseract.js-core/',import.meta.url);
 for(const name of await readdir(core))if(/\.wasm(?:\.js)?$/.test(name))await copyFile(new URL(name,core),new URL('core/'+name,target));
