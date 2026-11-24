@@ -121,7 +121,15 @@ def run():
     overlay=files[-1]
     doc=yaml.safe_load(overlay.read_text())
     portal=doc['services'][service]
-    portal['image']=new_image
+    # Keep the established PORTAL_RELEASE selector for later portal updates.
+    envpath=envfiles[-1]
+    text=envpath.read_text()
+    entry=r'(?m)^PORTAL_RELEASE=[^\n]*$'
+    line='PORTAL_RELEASE='+new_image.rsplit(':',1)[1]
+    outputs[envpath]=(re.sub(entry,line,text) if re.search(entry,text) else text.rstrip('\n')+'\n'+line+'\n').encode()
+    if 'image' in portal and '${PORTAL_RELEASE' not in str(portal['image']):
+        portal['image']=new_image.rsplit(':',1)[0]+':${PORTAL_RELEASE:?}'
+
     portal.setdefault('volumes',[]).append({'type':'bind','source':str(secret),'target':mount,'read_only':True})
     # SMTP on the VPS uses a split DNS hostname and an existing isolated mail network.
     mail_net='ph_auth_smtp'
@@ -156,6 +164,7 @@ def run():
         expected=json.loads(json.dumps(old_cfg['services']))
         exp=expected[service];now=new_cfg['services'][service]
         exp['image']=new_image
+        if 'PORTAL_RELEASE' in exp.get('environment',{}):exp['environment']['PORTAL_RELEASE']=new_image.rsplit(':',1)[1]
         volumes=[m for m in now['volumes'] if m['target']==mount]
         must(len(volumes)==1 and volumes[0]['source']==str(secret) and volumes[0].get('read_only'),'Nieprawidłowe podłączenie ustawień')
         exp['volumes']=sorted([*exp.get('volumes',[]),*volumes],key=lambda x:x['target'])
