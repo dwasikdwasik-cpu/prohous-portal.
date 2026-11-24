@@ -11,3 +11,4 @@ console.log('Prepared local PDF/OCR assets.');
 
 await cp(new URL('../node_modules/pdfjs-dist/standard_fonts/',import.meta.url),new URL('standard_fonts/',target),{recursive:true});
 await cp(new URL('../node_modules/pdfjs-dist/cmaps/',import.meta.url),new URL('cmaps/',target),{recursive:true});
+await cp(new URL('../node_modules/pdfjs-dist/wasm/',import.meta.url),new URL('wasm/',target),{recursive:true});
