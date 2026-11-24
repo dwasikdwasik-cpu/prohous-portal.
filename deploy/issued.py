@@ -20,12 +20,12 @@ def require(value,message):
     if not value:
         raise RuntimeError(message)
 
-def integrate(page):
+def integrate_original(page):
     dashboard='{client&&selected&&<IssuedInvoices key={selected} investmentId={selected} investmentName={inv?.name||\'\'} previewClient={previewClientId}/>}'
     management="{financeAdmin&&selected&&<IssuedInvoices key={selected} investmentId={selected} investmentName={inv?.name||''} manage/>}"
     imports="import IssuedInvoices from './IssuedInvoices';\n"
     if imports in page:
-        require(dashboard in page and management in page,'Niepełna integracja modułu w portalu')
+        require((dashboard in page or "{tab==='overview'&&"+dashboard[1:] in page) and management in page,'Niepełna integracja modułu w portalu')
         return page
     for anchor,insert in [('import ClientInvitations',imports),("{tab==='admin'&&admin&&<>",None)]:
         require(page.count(anchor)==1,'Nie znaleziono miejsca w aktualnym panelu: '+anchor)
@@ -42,6 +42,30 @@ def integrate(page):
     anchor="{tab==='zdjecia'&&!employee&&"
     require(page.count(anchor)==1,'Nie znaleziono sekcji pulpitu klienta')
     return page.replace(anchor,"{tab==='overview'&&"+dashboard[1:]+'\n '+anchor)
+
+
+def integrate(page):
+    visible_section = """{(tab==='overview'||tab==='issued')&&(client||financeAdmin)&&selected&&<IssuedInvoices key={selected} investmentId={selected} investmentName={inv?.name||''} manage={financeAdmin} previewClient={previewClientId}/>}"""
+    if visible_section in page:
+        return page
+    page=integrate_original(page)
+    previous = "{client&&selected&&<IssuedInvoices key={selected} investmentId={selected} investmentName={inv?.name||''} previewClient={previewClientId}/>}"
+    fallback = "{tab==='overview'&&"+previous[1:]
+    needle=fallback if fallback in page else previous
+    def once(old,new):
+        nonlocal page
+        require(page.count(old)==1,'Nie można dopasować widoku faktur w aktywnym panelu: '+old[:70])
+        page=page.replace(old,new,1)
+    once(needle,'')
+    once("{tab==='issued'&&financeAdmin&&selected&&<IssuedInvoices key={selected} investmentId={selected} investmentName={inv?.name||''} manage/>}", visible_section)
+    once("k==='issued'?financeAdmin:", "k==='issued'?(financeAdmin||client):")
+    once("const labels:Record<string,string>=", "const portalLabels:Record<string,string>=")
+    once(" const [availableBalance,setAvailableBalance]", """ const labels:Record<string,string>={...portalLabels,issued:client?'Faktury od ProHouse':portalLabels.issued};
+ useEffect(()=>{
+  if(profile?.status==='approved'&&(financeAdmin||client)&&new URLSearchParams(window.location.search).get('widok')==='faktury-prohouse')setTab('issued');
+ },[profile?.id,profile?.status,financeAdmin,client]);
+ const [availableBalance,setAvailableBalance]""")
+    return page
 
 def sql(statement):
     p=subprocess.run(['docker','exec','-i','supabase-db','psql','-X','-qAt','-v','ON_ERROR_STOP=1','-U','postgres','-d','postgres'],input=statement,text=True,capture_output=True)
