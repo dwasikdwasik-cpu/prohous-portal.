@@ -29,8 +29,11 @@ awk -F'|' -v email="$1" 'tolower($1)==email {found=1} END{exit !found}' /tmp/doc
         with state.open('x') as f:json.dump(saved,f)
         os.chmod(state,0o600)
     if not existing():
-        # The DMS setup utility accepts the password on standard input.
-        created=subprocess.run(['docker','exec','-i',MAIL,'setup','email','add',ADDRESS],
+        # Supply the positional password expected by DMS from a private pipe inside the mail container.
+        created=subprocess.run(['docker','exec','-i',MAIL,'sh','-c','IFS= read -r pw && exec setup email add "$1" "$pw"','sh',ADDRESS],
          input=saved['pass']+'\n',text=True,capture_output=True,timeout=20)
-        if created.returncode or not existing():raise RuntimeError('Nie udało się przygotować dedykowanego adresu nadawcy.')
+        if created.returncode or not existing():
+            diagnostic=(created.stdout+' '+created.stderr).lower()
+            reason=next((k for k in ['read-only','already','permission denied','password','not supported','ldap'] if k in diagnostic),'setup')
+            raise RuntimeError('Dodawanie nadawcy: '+reason+', kod '+str(created.returncode))
     return saved
