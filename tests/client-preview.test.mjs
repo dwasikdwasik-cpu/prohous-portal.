@@ -8,7 +8,7 @@ function adapter(db){return {
  from(table){const filters=[],params=[],orders=[];let columns='*',limit=1000,single=false;
   const query={select(value){columns=value;return query},eq(column,value){params.push(value);filters.push(`${column}=$${params.length}`);return query},is(column,value){assert.equal(value,null);filters.push(`${column} is null`);return query},in(column,values){const names=values.map(value=>{params.push(value);return '$'+params.length});filters.push(`${column} in (${names})`);return query},order(column,options={}){orders.push(column+(options.ascending===false?' desc':' asc'));return query},limit(value){limit=value;return query},maybeSingle(){single=true;return query},then(resolve,reject){const sql=`select ${columns} from ${table}${filters.length?' where '+filters.join(' and '):''}${orders.length?' order by '+orders.join(','):''} limit ${limit}`;return db.query(sql,params).then(result=>resolve({data:single?result.rows[0]||null:result.rows,error:null}),reject)}};return query;
  },
- rpc(name,values){assert.equal(name,'get_portal_balance');return db.query('select get_portal_balance($1) as value',[values.p_investment_id]).then(result=>({data:result.rows[0].value,error:null}))}
+ rpc(name,values){if(name==='preview_panel_ids')return db.query('select preview_panel_ids($1) as id',[values.person]).then(r=>({data:r.rows.map(x=>x.id),error:null}));assert.equal(name,'get_portal_balance');return db.query('select get_portal_balance($1) as value',[values.p_investment_id]).then(result=>({data:result.rows[0].value,error:null}))}
 };}
 test('preview documents, cameras and finances match actual client RLS for every visibility setting',async()=>{
  const {db,ids,asUser}=await managementFixture();try{

@@ -20,7 +20,8 @@ export async function GET(req:NextRequest,{params}:{params:Promise<{id:string}>}
    db.from('investments').select('*').eq('id',uploaded.investment_id).maybeSingle(),
    db.from('documents').select('*').eq('id',id).maybeSingle()
   ]);
-  if(targetError||investmentError||documentError||!clientDocumentVisible(target,investment,document))throw Error('404');
+  const membership=await db.rpc('preview_panel_ids',{person:previewClient});
+  if(targetError||investmentError||documentError||membership.error||!clientDocumentVisible(target,investment,document,membership.data?.includes(uploaded.investment_id)))throw Error('404');
  }
  if(uploaded.storage_path)return serveUploadedDocument(uploaded,{
   async info(path:string){const {data,error}=await db.storage.from(UPLOAD_BUCKET).info(path);if(error)throw error;return data},
