@@ -1,3 +1,4 @@
+import {existsSync,readFileSync} from 'node:fs';
 import {createHash, randomBytes} from 'node:crypto';
 import {createClient} from '@supabase/supabase-js';
 import nodemailer from 'nodemailer';
@@ -9,14 +10,19 @@ export function inviteSecret() {
 export function digestToken(token: string) {
   return createHash('sha256').update(token).digest('hex');
 }
+function settings():Record<string,string|undefined> {
+  const file='/run/secrets/prohouse-panel-invitations.json';
+  return existsSync(file)?{...process.env,...JSON.parse(readFileSync(file,'utf8'))}:process.env;
+}
 export function serviceClient() {
-  const url = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const env=settings();
+  const url = env.SUPABASE_URL || env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = env.SUPABASE_SERVICE_ROLE_KEY;
   if (!url || !key) throw Error('503');
   return createClient(url, key, {auth:{persistSession:false,autoRefreshToken:false}});
 }
 export async function sendInvitation(email: string, token: string) {
-  const env=process.env;
+  const env=settings();
   const host=env.PORTAL_SMTP_HOST, port=Number(env.PORTAL_SMTP_PORT || 587), user=env.PORTAL_SMTP_USER;
   const from=env.PORTAL_SMTP_FROM;
   if (!host || !from) throw Error('503');
