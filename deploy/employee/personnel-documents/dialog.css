@@ -1,0 +1,9 @@
+.phDocumentDialog{box-sizing:border-box;margin:auto;padding:1.25rem;width:min(32rem,94vw);max-height:90vh;max-height:90dvh;overflow:auto;border:1px solid #d7dce1;border-radius:14px;color:#18232f;background:#fff;box-shadow:0 18px 55px #0004}
+.phDocumentDialog::backdrop{background:#111b29a6}
+.phDocumentDialog h2{margin:0 0 .75rem;overflow-wrap:anywhere}
+.phDocumentWide{width:min(57rem,96vw)}
+.phDocumentControls{display:flex;align-items:center;flex-wrap:wrap;gap:.6rem;margin:.7rem 0}
+.phDocumentBody canvas,.phDocumentBody img{display:block;max-width:100%;height:auto;margin:auto}
+.phDocumentBody pre{white-space:pre-wrap;overflow-wrap:anywhere}
+.phDocumentDialog .phDelete,.personnelActions .phDelete{color:#92291e;border-color:#bb5c50}
+.phDocumentDialog .phDeleteConfirm{background:#9d291f;color:white;border-color:#9d291f}
