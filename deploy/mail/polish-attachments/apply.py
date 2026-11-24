@@ -21,15 +21,15 @@ def build(root):
         end=s.index('</label>',s.index('</textarea>',t))+len('</label>')
         s=s[:end]+('<div class="polish-mail-check"><button type="button" class="text-button" id="polish-spelling-check">Sprawdź pisownię</button>'
           '<span id="polish-spelling-status" role="status"></span><div id="polish-spelling-words"></div></div>')+s[end:]
-        s=replace(s,'<button type="button" class="secondary" id="multi-pdf"', '<button type="button" class="secondary" id="download-selected-files" disabled>Pobierz załączniki (ZIP)</button><span id="attachment-export-status" role="status"></span><button type="button" class="secondary" id="multi-pdf"')
-        script=re.search(r'<script[^>]*src="/mail-tools\.js[^"]*"[^>]*></script>',s)
-        if not script:raise ValueError('Brak modułu wyboru wiadomości.')
+        badge=re.search(r'<span\b[^>]*\bid="selection-count"[^>]*>[^<]*</span>',s)
+        if not badge:raise ValueError('Brak licznika zaznaczeń w skrzynce.')
+        s=replace(s,badge[0],badge[0]+'<button type="button" class="secondary" id="download-selected-files" disabled>Pobierz załączniki (ZIP)</button><span id="attachment-export-status" role="status"></span>')
         tag=hashlib.sha256((HERE/'polish-mail.js').read_bytes()).hexdigest()[:12]
-        return replace(s,script[0],script[0]+f'<script src="/polish-mail.js?v={tag}" defer></script>')
+        return replace(s,'</head>',f'<script src="/polish-mail.js?v={tag}" defer></script></head>')
     changed('public/index.html',html)
-    changed('server.mjs',lambda s:"import {attachPolishMail} from './polish-mail.mjs';\n"+replace(s,'const mailTools=attachMailTools(', 'attachPolishMail({app,session,account,db,imap,folder,data});\nconst mailTools=attachMailTools('))
+    changed('server.mjs',lambda s:"import {attachPolishMail} from './polish-mail.mjs';\n"+replace(s,'attachAdvanced({app,', 'attachPolishMail({app,session,account,db,imap,folder,data});\nattachAdvanced({app,'))
     changed('mail-render.mjs',lambda s:replace(replace(s,'{attachmentId=null,onAttachment=null}={}', '{attachmentId=null,onAttachment=null,onEachAttachment=null}={}'), 'if(id===attachmentId&&onAttachment)onAttachment(part,record);else part.content.resume();','if(onEachAttachment)onEachAttachment(part,record,id);else if(id===attachmentId&&onAttachment)onAttachment(part,record);else part.content.resume();'))
-    changed('Dockerfile',lambda s:replace(replace(s,'fonts-dejavu-core','fonts-dejavu-core hunspell hunspell-pl zip unzip'),'mail-tools.mjs ./','mail-tools.mjs polish-mail.mjs ./'))
+    changed('Dockerfile',lambda s:replace(replace(s,'ca-certificates','ca-certificates hunspell hunspell-pl zip unzip'),'COPY --chown=node:node public ./public','COPY --chown=node:node polish-mail.mjs ./\nCOPY --chown=node:node public ./public'))
     result['polish-mail.mjs']=(HERE/'polish-mail.mjs').read_text()
     result['public/polish-mail.js']=(HERE/'polish-mail.js').read_text()
     return result

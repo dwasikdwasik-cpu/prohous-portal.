@@ -81,7 +81,7 @@
   function say(message){progress.replaceChildren(document.createTextNode(message));}
   zipButton.onclick=()=>action(async()=>{
     if(building)return;
-    const ctx=mailContext(),selection=state.selectionAll,actor=state.user?.id;
+    const ctx={account:state.account,folder:state.view,validity:state.validity},selection=state.selectionAll,actor=state.user?.id;
     const sameContext=()=>state.user?.id===actor&&state.account===ctx.account&&state.view===ctx.folder;
     const selected=selection?{selection}:{uids:[...state.selectedIds]};
     building=true;renderSelection();say('Przygotowywanie plików…');
