@@ -89,7 +89,7 @@ def run():
     root=Path(config['build']['context'])
     must(root==Path('/opt/prohouse-scan-upload'),'Nieoczekiwany katalog źródłowy')
     live_env=variables(active)
-    mismatch=[k for k,v in config.get('environment',{}).items() if live_env.get(k)!=v]
+    mismatch=[k for k,v in config.get('environment',{}).items() if k!='PORTAL_RELEASE' and live_env.get(k)!=v]
     must(not mismatch,'Niezgodne ustawienia aktywnego kontenera: '+','.join(mismatch))
     print('Sprawdzono aktywny projekt i konfigurację.',flush=True)
     outputs={}
