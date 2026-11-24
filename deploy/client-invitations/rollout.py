@@ -45,6 +45,14 @@ def merged(root,path):
                 mod=new.decode().split(anchor,1)[1].split('<p className=',1)[0]
                 s=replacement(s,anchor,anchor+mod)
         return s.encode()
+    if path=='next.config.mjs':
+        s=local.decode()
+        m=re.search(r'(serverExternalPackages\s*:\s*\[)',s)
+        must(m is not None,'Brak listy zewnętrznych modułów serwera')
+        s=s[:m.end()]+"'nodemailer',"+s[m.end():]
+        m=re.search(r'(outputFileTracingIncludes\s*:\s*\{)',s)
+        if m:s=s[:m.end()]+"'/api/admin/client-invitations':['./node_modules/nodemailer/**/*'],"+s[m.end():]
+        return s.encode()
     if path in ('package.json','package-lock.json'):
         current=json.loads(local);old=json.loads(base);updated=json.loads(new)
         def add_changes(dst,b,a):
@@ -97,7 +105,7 @@ def run():
         dest=root/name;data=(SOURCE/name).read_bytes()
         must(not dest.exists() or dest.read_bytes()==data,'Istnieją inne zmiany: '+name)
         outputs[dest]=data
-    for name in ['app/page.tsx','app/api/document/[id]/route.ts','lib/client-preview.mjs','package.json','package-lock.json']:
+    for name in ['app/page.tsx','app/api/document/[id]/route.ts','lib/client-preview.mjs','next.config.mjs','package.json','package-lock.json']:
         outputs[root/name]=merged(root,name)
     # Preserve the existing authorization predicates before installing our additive policy.
     def compact(s):return ''.join(s.lower().split()).rstrip(';')
