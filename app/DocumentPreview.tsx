@@ -5,72 +5,146 @@ import type {PDFDocumentProxy,PDFDocumentLoadingTask,RenderTask} from 'pdfjs-dis
 import {previewType} from '../lib/document-preview.mjs';
 
 export type InvoiceAssignment={client:string,investment:string,confirmed:boolean};
-export default function DocumentPreview({file,title,filename,assignment,fileError,children,onClose}:{file:Blob|null,title:string,filename:string,assignment?:InvoiceAssignment|null,fileError?:string,children?:ReactNode,onClose:()=>void}){
- const dialog=useRef<HTMLDialogElement>(null),canvas=useRef<HTMLCanvasElement>(null);
- const [pdf,setPdf]=useState<PDFDocumentProxy|null>(null),[page,setPage]=useState(1),[image,setImage]=useState(''),[loading,setLoading]=useState(true),[error,setError]=useState('');
- const fallbackUrl=useRef('');
- const [nativePdf,setNativePdf]=useState('');
- useEffect(()=>{dialog.current?.showModal()},[]);
- useEffect(()=>{
-  let active=true;
-  let task:PDFDocumentLoadingTask|undefined;
-  let url='';
-  setLoading(true);setError('');setPdf(null);setImage('');setNativePdf('');setPage(1);
-  if(!file){setLoading(!fileError);setError(fileError||'');return}
-  (async()=>{
-   const mime=await previewType(file);
-   if(!active)return;
-   if(mime==='application/pdf'){
-    const blob=file.type===mime?file:new Blob([file],{type:mime});
-    url=URL.createObjectURL(blob);
-    fallbackUrl.current=url;
-    const pdfjs=await import('pdfjs-dist/legacy/build/pdf.mjs');
-    if(!active)return;
-    pdfjs.GlobalWorkerOptions.workerSrc='/ocr/pdf.preview.worker.min.mjs';
-    const bytes=new Uint8Array(await file.arrayBuffer());
-    if(!active)return;
-    task=pdfjs.getDocument({data:bytes,standardFontDataUrl:'/ocr/standard_fonts/',cMapUrl:'/ocr/cmaps/',cMapPacked:true});
-    const document=await task.promise;
-    if(active)setPdf(document);
-   }else if(mime?.startsWith('image/')){
-    url=URL.createObjectURL(new Blob([file],{type:mime}));
-    setImage(url);setLoading(false);
-   }else{
-    setError('Ten format nie obsługuje podglądu. Możesz pobrać dokument.');setLoading(false);
+type PreviewSource = {file: Blob, url: string, mime: string};
+
+function PdfPages({file, title}: {file: Blob, title: string}) {
+ const canvas = useRef<HTMLCanvasElement>(null);
+ const [pdf, setPdf] = useState<PDFDocumentProxy | null>(null);
+ const [page, setPage] = useState(1);
+ const [loading, setLoading] = useState(true);
+ const [error, setError] = useState('');
+
+ useEffect(() => {
+  let active = true;
+  let task: PDFDocumentLoadingTask | undefined;
+  async function load() {
+   const pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs');
+   const bytes = new Uint8Array(await file.arrayBuffer());
+   if (!active) return;
+   pdfjs.GlobalWorkerOptions.workerSrc = '/ocr/pdf.preview.worker.min.mjs';
+   task = pdfjs.getDocument({
+    data: bytes,
+    standardFontDataUrl: '/ocr/standard_fonts/',
+    cMapUrl: '/ocr/cmaps/',
+    cMapPacked: true,
+    wasmUrl: '/ocr/wasm/',
+    stopAtErrors: true,
+   });
+   const doc = await task.promise;
+   if (active) setPdf(doc);
+  }
+  void load().catch(() => {
+   if (active) {
+    setError('Nie udało się odczytać PDF. Otwórz oryginał w nowej karcie lub pobierz dokument.');
+    setLoading(false);
    }
-  })().catch(()=>{
-   if(!active)return;
-   if(fallbackUrl.current)setNativePdf(fallbackUrl.current);
-   else setError('Nie udało się wyświetlić podglądu. Możesz pobrać dokument.');
-   setLoading(false);
   });
-  return()=>{
-   active=false;
-   fallbackUrl.current='';
-   if(url)URL.revokeObjectURL(url);
-   if(task)void task.destroy().catch(()=>{});
+  return () => {
+   active = false;
+   if (task) void task.destroy().catch(() => {});
   };
- },[file,fileError]);
- useEffect(()=>{
-  if(!pdf||nativePdf||!canvas.current)return;
-  let active=true,render:RenderTask|undefined;
-  setLoading(true);setError('');
-  (async()=>{
-   const documentPage=await pdf.getPage(page),surface=canvas.current;if(!active||!surface)return;
-   const ratio=Math.min(window.devicePixelRatio||1,2),base=documentPage.getViewport({scale:1});
-   const width=Math.min(surface.parentElement?.clientWidth||900,1100)-32;
-   const viewport=documentPage.getViewport({scale:Math.max(.2,width/base.width)*ratio});
-   surface.width=Math.ceil(viewport.width);surface.height=Math.ceil(viewport.height);surface.style.width=viewport.width/ratio+'px';surface.style.height=viewport.height/ratio+'px';
-   render=documentPage.render({canvas:surface,viewport});await render.promise;if(active)setLoading(false);
-  })().catch(()=>{if(active){setNativePdf(fallbackUrl.current);setLoading(false)}});
-  return()=>{active=false;render?.cancel()};
- },[pdf,page,nativePdf]);
+ }, [file]);
+
+ useEffect(() => {
+  if (!pdf) return;
+  let active = true;
+  let render: RenderTask | undefined;
+  setLoading(true);
+  setError('');
+  async function draw(doc: PDFDocumentProxy) {
+   const documentPage = await doc.getPage(page);
+   const surface = canvas.current;
+   if (!active || !surface) return;
+   const ratio = Math.min(window.devicePixelRatio || 1, 2);
+   const width = Math.min(surface.parentElement?.clientWidth || 900, 1100) - 32;
+   const base = documentPage.getViewport({scale: 1});
+   const viewport = documentPage.getViewport({scale: Math.max(0.2, width / base.width) * ratio});
+   surface.width = Math.ceil(viewport.width);
+   surface.height = Math.ceil(viewport.height);
+   surface.style.width = viewport.width / ratio + 'px';
+   surface.style.height = viewport.height / ratio + 'px';
+   render = documentPage.render({canvas: surface, viewport});
+   await render.promise;
+  }
+  void draw(pdf).catch(() => {
+   if (active) setError('Nie udało się wyświetlić strony. Otwórz oryginał w nowej karcie lub pobierz dokument.');
+  }).finally(() => {
+   if (active) setLoading(false);
+  });
+  return () => { active = false; render?.cancel(); };
+ }, [pdf, page]);
+
+ return <>
+  {pdf && <nav className="preview-pagination" aria-label="Strony dokumentu">
+   <button type="button" className="secondary" disabled={page <= 1 || loading} onClick={() => setPage(p => p - 1)}>Poprzednia</button>
+   <span>Strona {page} z {pdf.numPages}</span>
+   <button type="button" className="secondary" disabled={page >= pdf.numPages || loading} onClick={() => setPage(p => p + 1)}>Następna</button>
+  </nav>}
+  <div className="preview-content" aria-busy={loading}>
+   {loading && <p role="status">Wczytywanie podglądu…</p>}
+   {error && <p role="status" className="notice">{error}</p>}
+   {pdf && <canvas hidden={Boolean(error)} ref={canvas} aria-label={`Strona ${page} dokumentu ${title}`}/>}
+  </div>
+ </>;
+}
+
+function PdfPreview({source, title}: {source: PreviewSource, title: string}) {
+ const nativeAvailable = navigator.pdfViewerEnabled === true;
+ const [native, setNative] = useState(nativeAvailable);
+
+ return <>
+  <div className="preview-pagination">
+   <a href={source.url} target="_blank" rel="noopener noreferrer">Otwórz oryginalny PDF w nowej karcie</a>
+   {nativeAvailable && <button type="button" className="secondary" onClick={() => setNative(value => !value)}>
+    {native ? 'Użyj czytnika portalu' : 'Użyj czytnika przeglądarki'}
+   </button>}
+  </div>
+  {native ? <iframe title={`Podgląd PDF: ${title}`} src={source.url}
+   style={{display:'block',width:'100%',height:'min(66dvh, 900px)',border:0}}/>
+   : <PdfPages file={source.file} title={title}/>}
+ </>;
+}
+
+export default function DocumentPreview({file,title,filename,assignment,fileError,children,onClose}:{file:Blob|null,title:string,filename:string,assignment?:InvoiceAssignment|null,fileError?:string,children?:ReactNode,onClose:()=>void}){
+ const dialog = useRef<HTMLDialogElement>(null);
+ const [source, setSource] = useState<PreviewSource | null>(null);
+ const [failure, setFailure] = useState<{file: Blob, message: string} | null>(null);
+ const current = source?.file === file ? source : null;
+ const error = fileError || (failure?.file === file ? failure?.message : '');
+ useEffect(() => { dialog.current?.showModal(); }, []);
+ useEffect(() => {
+  let active = true;
+  let url = '';
+  setSource(null);
+  setFailure(null);
+  if (!file) return;
+  const input = file;
+  async function prepare() {
+   const mime = await previewType(input);
+   if (!active) return;
+   if (!mime) {
+    setFailure({file: input, message: 'Ten format nie obsługuje podglądu. Możesz pobrać dokument.'});
+    return;
+   }
+   const blob = input.type === mime ? input : new Blob([input], {type: mime});
+   url = URL.createObjectURL(blob);
+   setSource({file: input, url, mime});
+  }
+  void prepare().catch(() => {
+   if (active) setFailure({file: input, message: 'Nie udało się otworzyć pliku. Możesz pobrać dokument.'});
+  });
+  return () => { active = false; if (url) URL.revokeObjectURL(url); };
+ }, [file]);
  function download(){if(!file)return;const url=URL.createObjectURL(file),link=document.createElement('a');link.href=url;link.download=filename;document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),60000)}
  return <dialog ref={dialog} className={'document-preview'+(children?' with-editor':'')} aria-labelledby="document-preview-title" onCancel={e=>{e.preventDefault();onClose()}}>
   <div className="preview-toolbar"><div><h2 id="document-preview-title">{title}</h2><small>Podgląd dokumentu</small></div><div className="actions"><button type="button" className="secondary" onClick={download} disabled={!file}>Pobierz fakturę / dokument</button><button type="button" onClick={onClose} autoFocus>Zamknij ×</button></div></div>
   {assignment!==undefined&&<div className="preview-assignment" role="status">{assignment?<><strong>{assignment.confirmed?'Przypisano do klienta':'Wybrano do przypisania — jeszcze niezapisane'}</strong><dl><div><dt>Klient</dt><dd>{assignment.client}</dd></div><div><dt>Inwestycja</dt><dd>{assignment.investment}</dd></div></dl></>:<strong>Faktura nie została jeszcze przypisana do klienta.</strong>}</div>}
-  <div className="preview-workspace"><div className="preview-document">{pdf&&!nativePdf&&<nav className="preview-pagination" aria-label="Strony dokumentu"><button type="button" className="secondary" disabled={page<=1||loading} onClick={()=>setPage(p=>p-1)}>Poprzednia</button><span>Strona {page} z {pdf.numPages}</span><button type="button" className="secondary" disabled={page>=pdf.numPages||loading} onClick={()=>setPage(p=>p+1)}>Następna</button></nav>}
-  <div className="preview-content" aria-busy={loading}>{loading&&<p role="status">Wczytywanie podglądu…</p>}{error&&<p role="status" className="notice">{error}</p>}{nativePdf&&<div style={{width:'100%'}}><a href={nativePdf} target="_blank" rel="noopener noreferrer">Otwórz PDF w nowej karcie</a><iframe title={`Podgląd PDF: ${title}`} src={nativePdf} style={{display:'block',width:'100%',height:'min(66dvh, 900px)',border:0}}/></div>}{pdf&&!nativePdf&&<canvas ref={canvas} aria-label={`Strona ${page} dokumentu ${title}`}/>}{image&&<img src={image} alt={title} onError={()=>setError('Nie udało się wyświetlić zdjęcia. Możesz pobrać plik.')}/>}</div>
+  <div className="preview-workspace"><div className="preview-document">
+  {error ? <p role="status" className="notice">{error}</p>
+   : !current ? <p role="status">Wczytywanie podglądu…</p>
+   : current.mime === 'application/pdf' ? <PdfPreview key={current.url} source={current} title={title}/>
+   : <div className="preview-content"><img src={current.url} alt={title}
+     onError={() => setFailure({file: current.file, message: 'Nie udało się wyświetlić zdjęcia. Możesz pobrać plik.'})}/></div>}
  </div>{children&&<section className="preview-editor" aria-label="Przypisanie i dane faktury">{children}</section>}</div>
  </dialog>;
 }
