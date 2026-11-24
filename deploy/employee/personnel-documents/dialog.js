@@ -59,11 +59,11 @@ function PersonnelFilePreview({file, url, onClose}) {
    const scale=Math.min(width*Math.min(window.devicePixelRatio||1,2)/base.width,2200/Math.max(base.width,base.height));
    const viewport=sheet.getViewport({scale});
    element.width=Math.ceil(viewport.width); element.height=Math.ceil(viewport.height);
-   job=sheet.render({canvasContext:element.getContext('2d'),viewport});
+   job=sheet.render({canvas:element,viewport});
    await job.promise;
    if(!cancelled)setPainted(page);
   }
-  paint().catch(()=>{if(!cancelled)setError('Nie udało się wyświetlić tej strony dokumentu.');});
+  paint().catch(e=>{if(!cancelled){console.warn('Podgląd PDF:',e.message);setError('Nie udało się wyświetlić tej strony dokumentu.');}});
   return ()=>{cancelled=true;if(job)job.cancel();};
  },[content,page]);
  const count=content?.pdf?.numPages||0;

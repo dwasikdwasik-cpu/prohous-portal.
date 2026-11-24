@@ -43,7 +43,13 @@ def repair():
     if not viewed:raise ValueError('Brak oczekiwanego podglądu kartoteki.')
     old_pdf=viewed[1]
     renderer=(PUBLIC/'assets'/old_pdf).read_text()
-    if old_pdf.startswith('pdf-doc-view-') and ('from"./'+Path(old_path).name+'"') in renderer[:200]:
+    previous_paint="sheet.render({canvasContext:element.getContext('2d'),viewport})"
+    needs_canvas=previous_paint in src
+    if needs_canvas:
+        src=once(src,previous_paint,"sheet.render({canvas:element,viewport})")
+        src=once(src,"paint().catch(()=>{if(!cancelled)setError('Nie udało się wyświetlić tej strony dokumentu.');});",
+                 "paint().catch(e=>{if(!cancelled){console.warn('Podgląd PDF:',e.message);setError('Nie udało się wyświetlić tej strony dokumentu.');}});")
+    if not needs_canvas and old_pdf.startswith('pdf-doc-view-') and ('from"./'+Path(old_path).name+'"') in renderer[:200]:
         print('Podgląd PDF jest już połączony z bieżącym panelem.')
         return
     js_name,new_src,pdf_name,new_pdf=prepare(src,renderer,old_pdf)
@@ -51,7 +57,10 @@ def repair():
     pdf_url='/assets/'+pdf_name
     new_html=once(html,old_path,js_url)
     new_sw=once(sw,old_path,js_url)
-    new_sw=once(new_sw,'const STATIC=[','const STATIC=["'+pdf_url+'",')
+    if old_pdf.startswith('pdf-doc-view-'):
+        new_sw=once(new_sw,'/assets/'+old_pdf,pdf_url)
+    else:
+        new_sw=once(new_sw,'const STATIC=[','const STATIC=["'+pdf_url+'",')
     old_cache=re.search(r"""const CACHE\s*=\s*['"]([^'"]+)['"]""",sw)[1]
     new_sw=once(new_sw,old_cache,'prohouse-shell-'+js_name[:-3])
     backup=Path('/opt/prohouse/backups')/datetime.datetime.now(datetime.timezone.utc).strftime('personnel-pdf-%Y%m%d-%H%M%S-%f')
