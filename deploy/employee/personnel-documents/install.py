@@ -10,7 +10,7 @@ import tempfile
 from pathlib import Path
 
 from patch import HERE, backend, frontend, once
-from pdf_runtime import repair
+from pdf_runtime import ensure_renderer, repair
 
 APP = Path('/opt/prohouse-employee')
 PUBLIC = APP/'public'
@@ -97,5 +97,6 @@ def install():
 if __name__=='__main__':
     with open('/run/lock/prohouse-personnel-install','w') as lock:
         fcntl.flock(lock,fcntl.LOCK_EX)
+        ensure_renderer()
         install()
         repair()

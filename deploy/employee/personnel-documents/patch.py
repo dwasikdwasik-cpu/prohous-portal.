@@ -1,5 +1,4 @@
 from pathlib import Path
-import re
 
 HERE = Path(__file__).resolve().parent
 
@@ -12,10 +11,7 @@ def frontend(text):
     start = text.index('function ProhousePersonnel(')
     end = text.index('\n}', text.index('preview&&h(', start)) + 2
     panel = text[start:end]
-    pdf = re.search(r'import\(`(\./[a-zA-Z0-9_.-]+\.js)`\),\[\]\);if\(n.GlobalWorkerOptions.workerSrc=', text)
-    if not pdf:
-        raise ValueError('Nie rozpoznano biblioteki podglądu PDF.')
-    helpers = (HERE / 'dialog.js').read_text().replace('__PDF_MODULE__', repr(pdf[1]))
+    helpers = (HERE / 'dialog.js').read_text()
     panel = once(panel, "async function changeState(e){"+panel.split("async function changeState(e){",1)[1].split('\n',1)[0], """async function changeState(e){
   e.preventDefault();
   if(!admin||busy||!pending)return;

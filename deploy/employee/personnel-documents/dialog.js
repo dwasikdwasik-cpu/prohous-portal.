@@ -29,10 +29,11 @@ function PersonnelFilePreview({file, url, onClose}) {
    const mime=(response.headers.get('Content-Type')||'').split(';')[0].trim().toLowerCase();
    if(mime!==file.mime)throw Error('Serwer zwrócił inny typ pliku niż zapisany w kartotece.');
    if(mime==='application/pdf'){
-    const [pdf,bytes]=await Promise.all([import(__PDF_MODULE__),response.arrayBuffer()]);
+    const [pdf,bytes]=await Promise.all([import('/assets/employee-pdfjs-5.6.205/pdf.min.mjs'),response.arrayBuffer()]);
     if(abort.signal.aborted)return;
-    pdf.GlobalWorkerOptions.workerSrc='/ocr/pdf.worker.min.mjs';
-    loading=pdf.getDocument({data:new Uint8Array(bytes),isEvalSupported:false});
+    const assets='/assets/employee-pdfjs-5.6.205/';
+    pdf.GlobalWorkerOptions.workerSrc=assets+'pdf.worker.min.mjs';
+    loading=pdf.getDocument({data:new Uint8Array(bytes),isEvalSupported:false,cMapUrl:assets+'cmaps/',cMapPacked:true,standardFontDataUrl:assets+'standard_fonts/',wasmUrl:assets+'wasm/',iccUrl:assets+'iccs/'});
     const doc=await loading.promise;
     if(!abort.signal.aborted)setContent({pdf:doc});
    }else if(mime==='text/plain'){
