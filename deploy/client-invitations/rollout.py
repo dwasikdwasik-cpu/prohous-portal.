@@ -1,5 +1,6 @@
 """Deploy only invitation and trash changes to the portal serving klient.prohous.pl."""
 import sys
+from sender import sender_settings
 sys.path.pop(0)
 import fcntl
 import json
@@ -121,10 +122,12 @@ def run():
     must(all(settings.values()),'Brakuje konfiguracji poczty lub autoryzacji')
     private=Path('/opt/prohouse/private/client-invitations')
     private.mkdir(mode=0o700,exist_ok=True); secret=private/'settings.json'
+    sender=sender_settings(private)
+    settings.update(PORTAL_SMTP_USER=sender['user'],PORTAL_SMTP_FROM=sender['user'],PORTAL_SMTP_PASS=sender['pass'])
     uid=int(out('docker','exec',active['Id'],'id','-u'))
     gid=int(out('docker','exec',active['Id'],'id','-g'))
     mount='/run/secrets/prohouse-panel-invitations.json'
-    release=out('git','-C',SOURCE,'rev-parse','--short=12','HEAD')
+    release=out('git','-C',SOURCE,'log','-1','--abbrev=12','--format=%h','--','app','lib','package.json','package-lock.json','next.config.mjs','supabase/migrations')
     new_image=old_image.rsplit(':',1)[0]+':panel-'+release
     overlay=files[-1]
     doc=yaml.safe_load(overlay.read_text())
@@ -192,7 +195,7 @@ const s=JSON.parse(fs.readFileSync('/run/secrets/prohouse-panel-invitations.json
  const port=Number(s.PORTAL_SMTP_PORT);
  await nodemailer.createTransport({host:s.PORTAL_SMTP_HOST,port,secure:port===465,requireTLS:port!==465,auth:{user:s.PORTAL_SMTP_USER,pass:s.PORTAL_SMTP_PASS},connectionTimeout:10000,socketTimeout:12000}).verify();
  console.log('AUTH_SMTP_OK');
-})().catch(e=>{console.error(e.code||e.message.slice(0,45));process.exit(1)});
+})().catch(e=>{console.error(e.code||e.message.slice(0,45),e.responseCode||'');process.exit(1)});
 """
         with (backup/'preflight.log').open('w') as log:subprocess.run([*prefix,'run','--rm','--no-deps','-T','--entrypoint','node',service,'-e',verifier],stdout=log,stderr=subprocess.STDOUT,check=True)
         print('Połączenia Auth i SMTP sprawdzone.',flush=True)
