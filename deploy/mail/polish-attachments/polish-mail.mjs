@@ -65,14 +65,18 @@ export async function extractFiles(messageStream,dir){
 export function attachPolishMail({app,session,account,db,imap,folder,data}){
   app.post('/api/spelling/pl',session,async(req,res)=>res.set('Cache-Control','no-store').json({words:await polishWords(req.body.words)}));
   const root=path.join(data,'attachment-exports'), jobs=new Map();
-  const ready=mkdir(root,{recursive:true,mode:0o700}).then(async()=>{
+  async function clearOldExports(){
     // Each panel instance has its own files. A restart may leave an unfinished download.
+    const active=new Set([...jobs.values()].map(job=>job.dir));
     for(const entry of await readdir(root,{withFileTypes:true})){
       if(!entry.isDirectory()||!/^export-[A-Za-z0-9]{6}$/.test(entry.name))continue;
-      const p=path.join(root,entry.name);const s=await stat(p);
-      if(Date.now()-s.mtimeMs>24*60*60*1000)await rm(p,{recursive:true,force:true});
+      const p=path.join(root,entry.name);if(active.has(p))continue;
+      const s=await stat(p).catch(e=>{if(e.code!=='ENOENT')throw e;});
+      if(s&&Date.now()-s.mtimeMs>24*60*60*1000)await rm(p,{recursive:true,force:true});
     }
-  });
+  }
+  const ready=mkdir(root,{recursive:true,mode:0o700}).then(clearOldExports);
+  const orphanSweep=setInterval(()=>ready.then(clearOldExports).catch(()=>{}),60*60*1000);orphanSweep.unref();
   ready.catch(()=>{});
   const clean=setInterval(()=>{for(const [id,j] of jobs){
     if(j.state!=='working'&&!j.readers&&Date.now()-j.used>ttl){

@@ -68,7 +68,10 @@ def main():
             with tempfile.NamedTemporaryFile(dir=(root/name).parent,mode='w',delete=False) as f:f.write(body)
             os.chmod(f.name,0o644);os.replace(f.name,root/name)
         run('docker','compose','build','panel')
-        run('docker','compose','run','--no-deps','--rm','-T','--entrypoint','node','-v',str(HERE/'verify.mjs')+':/app/verify-polish-mail.mjs:ro','panel','/app/verify-polish-mail.mjs')
+        fixture=backup/'verify-polish-mail.mjs'
+        shutil.copyfile(HERE/'verify.mjs',fixture)
+        fixture.chmod(0o644)
+        run('docker','compose','run','--no-deps','--rm','-T','--entrypoint','node','-v',str(fixture)+':/app/verify-polish-mail.mjs:ro','panel','/app/verify-polish-mail.mjs')
         switching=True
         run('docker','compose','up','-d','--no-deps','--no-build','panel')
         run('python3','-c',"""import time,urllib.request
