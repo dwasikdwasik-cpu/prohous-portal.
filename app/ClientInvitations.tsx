@@ -1,15 +1,16 @@
 'use client';
 import {useEffect,useRef,useState,FormEvent} from 'react';
 
-type Member={email:string,key:string,active:boolean,sent:boolean,expired:boolean};
-type Props={id:string,name:string,primary?:string,api:(path:string,body:unknown)=>Promise<Response>,onSelected:(id:string)=>Promise<void>};
-export default function ClientInvitations({id,name,primary,api,onSelected}:Props){
+type Member={email:string,key:string,memberId:string|null,primary:boolean,active:boolean,sent:boolean,expired:boolean};
+type Props={id:string,name:string,api:(path:string,body:unknown)=>Promise<Response>,onSelected:(id:string)=>Promise<void>,onPrimaryChanged:()=>Promise<void>,onPreview:(clientId:string,investmentId:string)=>void};
+export default function ClientInvitations({id,name,api,onSelected,onPrimaryChanged,onPreview}:Props){
  const [mode,setMode]=useState(id?'existing':'new'),[title,setTitle]=useState(''),[emails,setEmails]=useState('');
- const [members,setMembers]=useState<Member[]>([]),[busy,setBusy]=useState(false),[status,setStatus]=useState('');
+ const [roster,setRoster]=useState<{id:string,members:Member[]}|null>(null),[busy,setBusy]=useState(false),[status,setStatus]=useState('');
  const nextId=useRef(''),[createdId,setCreatedId]=useState('');
  const panel=mode==='new'?createdId:id;
+ const members=roster?.id===panel?roster.members:[];
  const call=async(action:string,investmentId:string,extra:Record<string,string>={})=>(await api('/api/admin/client-invitations',{action,investmentId,...extra})).json();
- useEffect(()=>{let alive=true;setMembers([]);if(panel)call('list',panel).then(r=>{if(alive)setMembers(r.members)}).catch(()=>{if(alive)setStatus('Nie udało się wczytać listy zaproszeń.')});return()=>{alive=false}},[panel]);
+ useEffect(()=>{let alive=true;if(panel)call('list',panel).then(r=>{if(alive)setRoster({id:panel,members:r.members})}).catch(()=>{if(alive)setStatus('Nie udało się wczytać listy zaproszeń.')});return()=>{alive=false}},[panel]);
  async function deliver(target:string,list:string[]){
   const results:string[]=[];
   for(const email of list){
@@ -17,7 +18,7 @@ export default function ClientInvitations({id,name,primary,api,onSelected}:Props
    catch(e){results.push(email+' — '+(e instanceof Error?e.message:'wysyłka niepotwierdzona'))}
   }
   setStatus(results.join('\n'));
-  const r=await call('list',target);setMembers(r.members);
+  const r=await call('list',target);setRoster({id:target,members:r.members});
  }
  async function submit(e:FormEvent){
   e.preventDefault();if(busy)return;
@@ -32,11 +33,20 @@ export default function ClientInvitations({id,name,primary,api,onSelected}:Props
    setEmails('');if(mode==='new'){await onSelected(target);setMode('existing');setCreatedId('');nextId.current='';setTitle('')}
   }catch(e){setStatus(e instanceof Error?e.message:'Nie udało się zapisać zmian.')}finally{setBusy(false)}
  }
- async function memberAction(m:Member,remove:boolean){
+ async function memberAction(member:Member,remove:boolean){
   if(busy||!panel)return;
-  if(remove&&!window.confirm('Cofnąć zaproszenie lub dodatkowy dostęp dla '+m.email+' do tego panelu?'))return;
-  setBusy(true);try{if(remove){await call('remove',panel,{email:m.key});setMembers((await call('list',panel)).members);setStatus('Cofnięto dostęp lub zaproszenie.')}else await deliver(panel,[m.email])}
-  catch(e){setStatus(e instanceof Error?e.message:'Nie udało się zmienić dostępu.')}finally{setBusy(false)}
+  const question=member.memberId
+   ?'Usunąć dostęp do tej inwestycji dla '+member.email+'?'
+   :'Wycofać zaproszenie dla '+member.email+'? Link w wiadomości przestanie działać.';
+  if(remove&&!window.confirm(question))return;
+  setBusy(true);
+  try{
+   if(!remove){await deliver(panel,[member.email]);return}
+   const r=await call(member.primary?'remove_primary':'remove',panel,{email:member.key});
+   setRoster({id:panel,members:r.members});
+   setStatus(member.memberId?'Usunięto dostęp do inwestycji.':'Wycofano zaproszenie.');
+   if(member.primary)await onPrimaryChanged();
+  }catch(e){setStatus(e instanceof Error?e.message:'Nie udało się zmienić dostępu.')}finally{setBusy(false)}
  }
  return <section className="panel"><h2>Panele klientów i zaproszenia</h2><form onSubmit={submit}>
  <label>Panel klienta<select value={mode} disabled={busy} onChange={e=>{setMode(e.target.value);setStatus('')}}>
@@ -45,6 +55,16 @@ export default function ClientInvitations({id,name,primary,api,onSelected}:Props
  <label>Adresy e-mail klientów<textarea rows={3} value={emails} onChange={e=>setEmails(e.target.value)} placeholder="Wpisz adresy po przecinku lub po jednym w wierszu"/></label>
  <small>Każda osoba otrzyma osobne zaproszenie do tej samej inwestycji i będzie korzystać z własnego hasła.</small>
  <button disabled={busy}>{busy?'Proszę czekać…':mode==='new'?(emails.trim()?'Utwórz panel i wyślij zaproszenia':'Utwórz panel'):'Wyślij zaproszenia'}</button></form>
- {panel&&<div>{mode==='existing'&&primary&&<p>Główny klient · {primary}</p>}{members.map(m=><div className="doc-row" key={m.key}><div><b>{m.email}</b><small>{m.active?'Dostęp aktywny':m.expired?'Zaproszenie wygasło':m.sent?'Zaproszenie wysłane':'Wysyłka niepotwierdzona'}</small></div><div className="actions">{!m.active&&<button className="secondary" disabled={busy} onClick={()=>memberAction(m,false)}>Wyślij ponownie</button>}<button className="secondary danger" disabled={busy} onClick={()=>memberAction(m,true)}>{m.active?'Cofnij dostęp':'Wycofaj zaproszenie'}</button></div></div>)}</div>}
+ {panel&&roster?.id===panel&&<div>
+  {members.length===0&&<p className="muted">Brak osób przypisanych do tej inwestycji.</p>}
+  {members.map(member=><div className="doc-row" key={member.key}>
+   <div><b>{member.email}</b><small>{member.primary?'Główny klient · ':''}{member.active?'Dostęp aktywny':member.memberId?'Dostęp nieaktywny':member.expired?'Zaproszenie wygasło':member.sent?'Zaproszenie wysłane':'Wysyłka niepotwierdzona'}</small></div>
+   <div className="actions">
+    {member.active&&member.memberId&&<button type="button" className="secondary" disabled={busy} onClick={()=>{if(member.memberId)onPreview(member.memberId,panel)}}>Zobacz jako klient</button>}
+    {!member.memberId&&<button type="button" className="secondary" disabled={busy} onClick={()=>memberAction(member,false)}>Wyślij ponownie</button>}
+    <button type="button" className="secondary danger" disabled={busy} onClick={()=>memberAction(member,true)}>{member.memberId?'Usuń dostęp':'Wycofaj zaproszenie'}</button>
+   </div>
+  </div>)}
+ </div>}
  {status&&<p role="status" style={{whiteSpace:'pre-line'}}>{status}</p>}</section>
 }
