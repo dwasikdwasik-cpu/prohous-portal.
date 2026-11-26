@@ -1,0 +1,22 @@
+Dzień dobry,
+
+zapraszam Państwa do Centrum Pracownika ProHouse. Konto biura kadr i płac będzie miało pełne uprawnienia administracyjne w tym systemie.
+
+Rejestracja i logowanie
+1. Otwórzcie Państwo formularz: {activation_url}
+2. Wpiszcie jednorazowy kod przesłany osobno na adres {email} i ustawcie własne hasło.
+3. Przy kolejnych logowaniach proszę wejść na https://praca.prohous.pl/, wybrać „Panel administratora” i podać login {email} oraz ustawione hasło.
+
+Zakres pracy w panelu
+• Pracownicy i przyjęcia. Mogą Państwo dodawać pracowników, aktualizować ich dane i status zatrudnienia, zarządzać dostępem i resetować hasła pracowników.
+• Kartoteki i dokumenty. Panel pozwala prowadzić dokumentację kadrową, obsługiwać przyjęcia pracowników, zaświadczenia oraz zajęcia komornicze.
+• Ewidencja godzin. Można wpisywać i korygować godziny, stosować wpisy dla wielu dni i ustawiać limity dzienne. W „Ewidencji pracowników” po wybraniu miesiąca przycisk „Wszyscy pracownicy (jeden PDF)” pobiera miesięczne listy całego zespołu. Dostępne są też PDF i CSV jednej osoby oraz archiwum ZIP.
+• Obecność. Mogą Państwo sprawdzać rejestracje rozpoczęcia i zakończenia pracy oraz zapisane lokalizacje, korygować wpisy i kończyć otwarte rejestracje.
+• Urlopy i chorobowe. Panel obejmuje wnioski, decyzje urlopowe, historię nieobecności i salda urlopowe pracowników.
+• Płace i zaliczki. Mogą Państwo zarządzać paskami wypłat i danymi płacowymi, obsługiwać zaliczki i wypłaty gotówkowe, przygotować plik przelewów do mBanku i zapisać potwierdzenia wypłat.
+• Kontakt z zespołem. Panel umożliwia odpowiadanie na pytania pracowników oraz wysyłanie komunikatów widocznych po zalogowaniu ze statusem odczytu.
+
+W razie pytań dotyczących konta proszę o odpowiedź na tę wiadomość.
+
+Z poważaniem
+ProHouse Sp. z o.o.

@@ -1,0 +1,56 @@
+--- a/app/DesignerPanel.jsx
++++ b/app/DesignerPanel.jsx
+@@ -1,4 +1,5 @@
+ 'use client';
+-import {useEffect,useRef,useState} from 'react';
++import {ProjectFolders} from './ProjectFolders';
++import {useEffect,useState} from 'react';
+ import {db} from '../lib/supabase';
+ 
+@@ -70,29 +71,10 @@
+ export function DesignerPanel({profile}) {
+   const approved=profile.status==='approved';
+-  const {data,error,refresh}=usePanelData('designer_workspace',approved);
++  const {data,error,refresh}=usePanelData('designer_folder_workspace',approved);
+   const [investment,setInvestment]=useState('');
+   const [busy,setBusy]=useState(false);
+   const [message,setMessage]=useState('');
+-  const request=useRef(null);
+   const chosen=investment&&data?.investments.some(i=>i.id===investment)?investment:'';
+-  function switchInvestment(value){setInvestment(value);setMessage('');request.current=null;}
+-  async function submit(event) {
+-    event.preventDefault();
+-    if(busy||!chosen)return;
+-    const form=event.currentTarget, fields=new FormData(form), file=fields.get('file');
+-    if(!file?.size || file.size>25*1024*1024){setMessage('Wybierz plik o rozmiarze do 25 MB.');return;}
+-    setBusy(true);setMessage('');
+-    try {
+-      const session=await db.auth.getSession();
+-      if(!session.data.session)throw Error('Sesja wygasła. Zaloguj się ponownie.');
+-      request.current=request.current||crypto.randomUUID();
+-      const q=new URLSearchParams({investment:chosen,request:request.current,title:String(fields.get('title')).trim(),extension:file.name.split('.').pop().toLowerCase()});
+-      const res=await fetch('/api/designer-project?'+q,{method:'POST',headers:{Authorization:'Bearer '+session.data.session.access_token,'Content-Type':'application/octet-stream'},body:file});
+-      const result=await res.json().catch(()=>({}));
+-      if(!res.ok)throw Error(result.error||'Nie udało się wysłać projektu. Spróbuj ponownie.');
+-      request.current=null;form.reset();setMessage('Projekt zapisany. Klient widzi go w projektach swojej inwestycji.');refresh();
+-    } catch(e){setMessage(e.message||'Nie udało się wysłać projektu.');}
+-    finally{setBusy(false);}
+-  }
++  function switchInvestment(value){setInvestment(value);setMessage('');}
+   async function download(item){
+     const {data,error}=await db.storage.from('portal-documents').download(item.path);
+@@ -111,12 +93,6 @@
+         <option value="">Wybierz inwestycję klienta</option>{data.investments.map(i=><option key={i.id} value={i.id}>{i.client} — {i.name}</option>)}
+       </select></label>
+-      {chosen&&<><form key={chosen} onSubmit={submit} onChange={()=>{request.current=null;setMessage('');}}>
+-        <fieldset disabled={busy} style={{border:0,padding:0}}><label>Nazwa projektu<input name="title" required maxLength={160}/></label>
+-        <label>Plik projektu (PDF, JPG lub PNG, do 25 MB)<input name="file" type="file" required accept=".pdf,.jpg,.jpeg,.png"/></label>
+-        <button type="submit">{busy?'Wysyłanie…':'Dodaj projekt dla klienta'}</button></fieldset>
+-      </form><h3>Dodane projekty</h3>
+-        {data.projects.some(p=>p.investment===chosen)?<ul>{data.projects.filter(p=>p.investment===chosen).map(p=><li key={p.id}>
+-          <button type="button" onClick={()=>download(p)}>{p.title}</button> · {new Date(p.date).toLocaleDateString('pl-PL')}
+-        </li>)}</ul>:<p>Nie dodano jeszcze projektu do tej inwestycji.</p>}</>}</>}
++      {chosen&&<ProjectFolders key={chosen} investment={chosen} folders={data.folders.filter(f=>f.investment===chosen)}
++        projects={data.projects.filter(p=>p.investment===chosen)} refresh={refresh} download={download} onBusy={setBusy}/>}</>}
+     </section>}{message&&<p role="status">{message}</p>}
+   </main>;

@@ -1,0 +1,25 @@
+<!doctype html><html lang="pl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><meta name="referrer" content="no-referrer"><title>Aktywacja konta kadr i płac · ProHouse</title>
+<style>*{box-sizing:border-box}body{margin:0;background:#f4f4f2;color:#172430;font:16px/1.55 system-ui,sans-serif}main{width:min(92%,31rem);margin:8vh auto;background:white;padding:clamp(1.5rem,5vw,3rem);border-radius:16px}img{max-width:9rem;max-height:3rem}h1{line-height:1.12;font-size:2rem}label{display:block;font-weight:600;margin:1rem 0}input,button{font:inherit;width:100%;border-radius:6px;padding:.7rem}input{display:block;margin-top:.25rem;border:1px solid #87929a}button{background:#172430;color:white;border:0;cursor:pointer}button:disabled{opacity:.65}a{color:#143f66}p[role=alert]{color:#963222}[hidden]{display:none!important}</style></head>
+<body><main><img src="/brand/prohouse-logo.png" alt="ProHouse"><h1>Aktywacja konta kadr i płac</h1>
+<p>Loginem jest adres e-mail, na który biuro otrzymało zaproszenie.</p>
+<form id="verify"><label>Jednorazowy kod z e-maila<input name="code" required inputmode="numeric" pattern="[0-9]{6,10}" autocomplete="one-time-code"></label><button>Potwierdź zaproszenie</button></form>
+<form id="password" hidden><label>Nowe hasło (12–128 znaków)<input type="password" name="password" required minlength="12" maxlength="128" autocomplete="new-password"></label><label>Powtórz nowe hasło<input type="password" name="repeat" required autocomplete="new-password"></label><button>Ustaw hasło</button></form>
+<p role="alert" id="error"></p><p role="status" id="status"></p><a id="login" href="/" hidden>Przejdź do logowania · Panel administratora</a></main>
+<script type="module">
+const verify=document.getElementById('verify'),password=document.getElementById('password'),error=document.getElementById('error'),status=document.getElementById('status');
+const kind=new URLSearchParams(location.search).get('typ')==='recovery'?'recovery':'invite';
+for(const form of [verify,password])form.addEventListener('submit',async event=>{
+ event.preventDefault();error.textContent='';
+ const fields=new FormData(form),isCode=form===verify;
+ if(!isCode && fields.get('password')!==fields.get('repeat')){error.textContent='Wpisane hasła różnią się.';return;}
+ const button=form.querySelector('button');button.disabled=true;
+ try {
+  const response=await fetch('/api/staff-activation',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(isCode?{action:'verify',code:fields.get('code').trim(),kind}:{action:'password',password:fields.get('password')})});
+  const answer=await response.json();
+  if(!response.ok||!answer.ok)throw Error(answer.error||'Nie udało się zapisać.');
+  form.reset();form.hidden=true;
+  if(isCode){password.hidden=false;password.elements.password.focus();status.textContent='Kod zaakceptowany. Ustaw własne hasło.';}
+  else {status.textContent='Hasło zapisane. W Centrum Pracownika wybierz „Panel administratora” i zaloguj się adresem e-mail biura.';document.getElementById('login').hidden=false;}
+ }catch(e){error.textContent=e.message||'Sprawdź połączenie i spróbuj ponownie.';}finally{button.disabled=false;}
+});
+</script></body></html>

@@ -1,0 +1,16 @@
+--- a/app/api/designer-project/route.js
++++ b/app/api/designer-project/route.js
+@@ -35,4 +35,6 @@
+     if(profile.data?.role!=='designer'||profile.data?.status!=='approved')throw new Problem(403,'Wymagane jest zatwierdzone konto projektanta.');
+     const q=new URL(req.url).searchParams,investment=q.get('investment'),request_id=q.get('request'),title=(q.get('title')||'').trim();
++    const folder=q.get('folder')||null;
++    if(folder&&!uuid.test(folder))throw new Problem(400,'Wybierz folder inwestycji.');
+     const ext=(q.get('extension')||'').toLowerCase(),types={pdf:'application/pdf',png:'image/png',jpg:'image/jpeg',jpeg:'image/jpeg'};
+     if(!uuid.test(investment)||!uuid.test(request_id)||!title||title.length>160)throw new Problem(400,'Wybierz inwestycję i podaj nazwę projektu.');
+@@ -43,5 +45,5 @@
+     const args={investment,request_id,title,extension:checked.extension,mime:checked.mime,bytes:raw.length,checksum:createHash('sha256').update(raw).digest('hex')};
+     async function record(finish){
+-      const {data,error}=await db.rpc('designer_project_file',{...args,finish});
++      const {data,error}=await db.rpc('designer_file_in_folder',{...args,finish,folder});
+       if(error?.code==='42501')throw new Problem(403,'Administrator nie przypisał Ci tej inwestycji.');
+       if(error?.code==='22023')throw new Problem(409,'Dane pliku zmieniły się. Wybierz go ponownie.');
