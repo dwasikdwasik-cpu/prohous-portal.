@@ -1,0 +1,20 @@
+services:
+  panel:
+    build: .
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      - "127.0.0.1:18754:8000"
+    volumes:
+      - dane:/app/data
+  przypomnienia:
+    build: .
+    command: python -u app.py worker
+    depends_on:
+      - panel
+    restart: unless-stopped
+    env_file: .env
+    volumes:
+      - dane:/app/data
+volumes:
+  dane:
